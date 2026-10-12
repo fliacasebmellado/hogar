@@ -1,0 +1,15 @@
+node_modules
+dist
+dev-dist
+test-results
+playwright-report
+.env
+.env.*
+*.local
+apps-script/.clasp.json
+tsconfig.tsbuildinfo
+*.traineddata
+.clasp.json
+.gas-deployment.json
+.clasprc.json
+.claude

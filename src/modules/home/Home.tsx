@@ -157,9 +157,9 @@ export default function Home() {
         <div className="card"><ul className="list">{profiles.filter((p) => p.active && p.role !== 'family').map((p) => {
           const open = d.tasks.filter((t) => !t.isSeries && t.status !== 'completada' && t.assigneeId === p.id);
           const late = open.filter((t) => t.dueDate && t.dueDate < t0).length;
-          return <li key={p.id}><Link className="item" to="/familia"><Avatar profile={p} /><div className="item-main"><div className="item-title">{p.name}</div><div className="item-sub">{pl(open.length, 'tarea abierta', 'tareas abiertas')}</div></div>{late > 0 && <StatusChip tone="alert">{late} atrasada(s)</StatusChip>}</Link></li>;
+          return <li key={p.id}><Link className="item" to="/familia" aria-label={`${p.name}: ${pl(open.length, 'tarea abierta', 'tareas abiertas')}`}><Avatar profile={p} /><div className="item-main"><div className="item-title">{p.name}</div><div className="item-sub">{pl(open.length, 'tarea abierta', 'tareas abiertas')}</div></div>{late > 0 && <StatusChip tone="alert">{late} atrasada(s)</StatusChip>}</Link></li>;
         })}</ul></div>
-        <Link to="/familia" className="fold-link">Ver familia</Link>
+        <Link to="/familia" className="fold-link" aria-label="Ver familia">Ver familia</Link>
         </details>
       </section>
     ),

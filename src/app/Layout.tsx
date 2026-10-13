@@ -3,7 +3,7 @@ import { ErrorBoundary, Loading } from '../ui/Boundary';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Home, CalendarDays, CheckSquare, ShoppingCart, Wallet, Wrench, Users, FileText, Inbox, Settings, Search, Bell, Plus,
-  Cloud, CloudOff, RefreshCw, HardDrive, AlertTriangle, Menu, Building2,
+  Cloud, CloudOff, RefreshCw, HardDrive, AlertTriangle, Menu, Building2, House,
 } from 'lucide-react';
 import { useApp, useLive } from './context';
 import { Avatar } from '../ui/components';
@@ -158,10 +158,16 @@ function NotifBell() {
 
 function ProfileGate({ profiles }: { profiles: Profile[] }) {
   return (
-    <main className="content" style={{ maxWidth: 520, paddingTop: 40 }}>
-      <h1 style={{ marginBottom: 6 }}>¿Quién usa Hogar ahora?</h1>
-      <p className="muted" style={{ marginBottom: 18 }}>Elegí tu perfil. El perfil organiza lo que ves; no reemplaza una contraseña.</p>
-      <ProfileList profiles={profiles} />
+    <main className="content gate">
+      <div className="gate-brand" aria-hidden="true">
+        <span className="gate-logo"><House size={38} strokeWidth={2} /></span>
+        <span className="gate-name">Hogar</span>
+      </div>
+      <div className="card gate-card">
+        <h1>¿Quién usa Hogar ahora?</h1>
+        <p className="muted">Elegí tu perfil. El perfil organiza lo que ves; no reemplaza una contraseña.</p>
+        <ProfileList profiles={profiles} />
+      </div>
     </main>
   );
 }

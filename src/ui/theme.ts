@@ -26,7 +26,8 @@ export interface Tone { base: string; tint: string; soft: string; ink: string; o
 export function tones(hex: string): Tone {
   let ink = hex;
   for (let i = 0; i < 12 && contrast(ink, '#ffffff') < 4.5; i++) ink = mix(ink, '#1c1917', 0.18);
-  return { base: hex, tint: mix(hex, '#ffffff', 0.84), soft: mix(hex, '#ffffff', 0.62), ink, on: onColor(hex) };
+  const base = mix(hex, '#ffffff', 0.5); // la paleta se usa al 50 % de transparencia
+  return { base, tint: mix(hex, '#ffffff', 0.86), soft: mix(hex, '#ffffff', 0.68), ink, on: onColor(base) };
 }
 
 export type ModuleId = 'agenda' | 'tareas' | 'compras' | 'economia' | 'inversiones' | 'casa' | 'familia' | 'documentos' | 'asistente' | 'ajustes' | 'avisos';

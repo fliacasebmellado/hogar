@@ -48,11 +48,11 @@ function QuickCircle({ to, label, Icon, color, onClick }: { to?: string; label: 
 function Tile({ to, label, meta, Icon, color, badge, alert }: { to: string; label: string; meta: string; Icon: any; color: ModuleId; badge?: number; alert?: boolean }) {
   const t = tones(MODULE_COLOR[color]);
   return (
-    <Link to={to} className="tile" aria-label={`${label}: ${meta}`}>
-      <span className="tile-icon" style={{ background: t.tint, color: t.ink }}><Icon size={22} strokeWidth={2.2} /></span>
+    <Link to={to} className="tile" aria-label={`${label}: ${meta}`} style={{ background: t.base, color: t.on }}>
+      <span className="tile-icon" style={{ color: t.ink }}><Icon size={24} strokeWidth={2.2} /></span>
       <span className="tile-label">{label}</span>
       <span className="tile-meta">{meta}</span>
-      {!!badge && <span className={`tile-badge${alert ? ' alert' : ''}`} style={alert ? undefined : { background: t.base, color: t.on }}>{badge}</span>}
+      {!!badge && <span className={`tile-badge${alert ? ' alert' : ''}`} style={alert ? undefined : { background: t.ink, color: '#fff' }}>{badge}</span>}
     </Link>
   );
 }

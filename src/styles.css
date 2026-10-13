@@ -545,3 +545,9 @@ body { background: linear-gradient(var(--band) 0, var(--band) 150px, var(--bg) 1
 /* Campos sueltos (fuera de tarjetas) en blanco; dentro de tarjetas y hojas, en gris claro */
 .input, select.input, textarea.input { background: var(--surface); box-shadow: var(--shadow); }
 .card .input, dialog .input, .proposal .input { background: var(--surface-2); box-shadow: none; }
+/* Botones de secciones: fondo con el color de la sección (al 50 %), ícono y texto centrados */
+.tile { align-items: center; justify-content: center; text-align: center; gap: 8px; box-shadow: none; }
+.tile:hover { filter: brightness(0.97); }
+.tile-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.7); }
+.tile-label { font-size: 0.92rem; }
+.tile-meta { color: inherit; opacity: 0.72; }

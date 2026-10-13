@@ -1,4 +1,4 @@
-import { Suspense, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ErrorBoundary, Loading } from '../ui/Boundary';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
@@ -40,6 +40,14 @@ const TITLES: Record<string, string> = {
 
 export function Layout({ updateBar }: { updateBar?: ReactNode }) {
   const { profile, profiles, online, toasts, dismissToast, permissions } = useApp();
+  // Los avisos van en la capa superior del navegador (popover) para verse también encima de las hojas modales abiertas:
+  // se vuelven a mostrar en cada aviso nuevo para quedar por encima de la última hoja abierta.
+  const toastLayer = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = toastLayer.current as (HTMLDivElement & { showPopover?: () => void; hidePopover?: () => void }) | null;
+    if (!el?.showPopover) return;
+    try { if (el.matches(':popover-open')) el.hidePopover!(); if (toasts.length) el.showPopover(); } catch { /* navegador sin popover */ }
+  }, [toasts]);
   const loc = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -110,7 +118,7 @@ export function Layout({ updateBar }: { updateBar?: ReactNode }) {
       </Sheet>
       <ProfilePicker open={pickerOpen} onClose={() => setPickerOpen(false)} />
       <PinSheet />
-      <div className="toasts" aria-live="polite">
+      <div className="toasts" aria-live="polite" ref={toastLayer} {...{ popover: 'manual' }}>
         {toasts.map((t) => (
           <div key={t.id} className={`toast${t.tone === 'error' ? ' error' : ''}`} role={t.tone === 'error' ? 'alert' : 'status'}>
             <span style={{ flex: 1 }}>{t.message}</span>

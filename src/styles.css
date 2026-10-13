@@ -598,3 +598,6 @@ h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .stro
 .item-sub, .tile-meta, .muted, .hint, .ev-sub, .date { font-weight: 300; }
 .field > label, .field-label, .chip, .bottomnav a, .bottomnav button, .quick-round .lbl, .pstrip .pname, .eyebrow { font-weight: 400; }
 .bottomnav a.active, .bottomnav button.active, .pstrip button[aria-pressed='true'] .pname { font-weight: 700; }
+/* Capa de avisos en el "top layer" (popover): sin el estilo por defecto del navegador */
+.toasts[popover] { inset: auto; left: 50%; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; color: inherit; }
+.error-inline { color: var(--alert-fg); background: var(--alert-bg); padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; }

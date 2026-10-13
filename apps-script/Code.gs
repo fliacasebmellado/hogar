@@ -177,6 +177,16 @@ function status_() {
     gmailEnabled: p.getProperty('GMAIL_ENABLED') === 'true',
     calendarId: p.getProperty('CALENDAR_ID') || 'primary',
     calendarAuto: p.getProperty('CALENDAR_AUTO') === 'true',
-    owner: Session.getEffectiveUser().getEmail(),
+    owner: ownerEmail_(),
   };
+}
+
+/**
+ * Mail de la cuenta dueña, solo informativo. Session.getEffectiveUser() pide el permiso extra userinfo.email, que el
+ * proyecto no tiene: se obtiene del dueño de la carpeta de la app (permiso de Drive, ya otorgado). Si falla, queda vacío.
+ */
+function ownerEmail_() {
+  try { return folderFor_('app').getOwner().getEmail(); } catch (e) {}
+  try { return Session.getEffectiveUser().getEmail(); } catch (e2) {}
+  return '';
 }

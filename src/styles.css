@@ -551,3 +551,32 @@ body { background: linear-gradient(var(--band) 0, var(--band) 150px, var(--bg) 1
 .tile-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.7); }
 .tile-label { font-size: 0.92rem; }
 .tile-meta { color: inherit; opacity: 0.72; }
+/* Inicio: cada bloque (Hoy, Tareas, Pagos, Compras…) es una tarjeta con el color del perfil activo al 50 %,
+   con un reflejo diagonal suave; lo de adentro (eventos, listas) queda en blanco encima. */
+section[aria-labelledby^='h-'] {
+  position: relative; overflow: hidden; margin-top: 14px; padding: 18px 18px 18px; border-radius: var(--radius);
+  background:
+    linear-gradient(115deg, transparent 0 58%, rgba(255, 255, 255, 0.22) 58% 66%, transparent 66%),
+    linear-gradient(115deg, transparent 0 70%, rgba(255, 255, 255, 0.12) 70% 74%, transparent 74%),
+    var(--band);
+  color: var(--text);
+}
+section[aria-labelledby^='h-'] .section-head { margin: 0 0 10px; }
+section[aria-labelledby^='h-'] .section-head h2 { font-size: 1.12rem; font-weight: 800; }
+section[aria-labelledby^='h-'] .section-head h2 .count { color: var(--text-2); font-weight: 600; opacity: 0.85; }
+section[aria-labelledby^='h-'] .section-head a { color: var(--text); background: rgba(255, 255, 255, 0.55); border-radius: 999px; padding: 5px 12px; font-size: 0.8rem; font-weight: 700; }
+section[aria-labelledby^='h-'] > p.muted { color: var(--text-2); font-weight: 500; }
+section[aria-labelledby^='h-'] .card { box-shadow: none; }
+section[aria-labelledby^='h-'] .chip { background: rgba(255, 255, 255, 0.7); color: var(--text); }
+section[aria-labelledby^='h-'] .next-divider { color: var(--text-2); }
+section[aria-labelledby^='h-'] .next-divider::before, section[aria-labelledby^='h-'] .next-divider::after { border-top-color: rgba(255, 255, 255, 0.7); }
+a.item { text-decoration: none; }
+/* Bloque desplegable (Responsabilidades) */
+details.fold > summary { list-style: none; cursor: pointer; margin: 0; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold .fold-chevron { transition: transform 0.2s ease; flex-shrink: 0; align-self: center; }
+details.fold[open] .fold-chevron { transform: rotate(180deg); }
+details.fold[open] > summary { margin-bottom: 10px; }
+details.fold .fold-link { display: inline-block; margin-top: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text); background: rgba(255, 255, 255, 0.55); border-radius: 999px; padding: 5px 12px; text-decoration: none; }
+section[aria-labelledby^='h-'] details.fold > summary.section-head { margin-bottom: 0; }
+section[aria-labelledby^='h-'] details.fold[open] > summary.section-head { margin-bottom: 10px; }

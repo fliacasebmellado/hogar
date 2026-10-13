@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
+import { ChevronDown, Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
 import { useApp, useLive } from '../../app/context';
 import type { CalendarEvent, Capture, InvestmentTax, Payment, Profile, Repair, ShoppingItem, Task } from '../../domain/types';
 import { addDays, diffDays, formatDate, formatDateTimeHuman, relativeDay, today } from '../../domain/dates';
@@ -149,12 +149,18 @@ export default function Home() {
     ) : null,
     responsabilidades: () => (
       <section key="responsabilidades" aria-labelledby="h-resp">
-        <div className="section-head"><h2 id="h-resp">Responsabilidades</h2><Link to="/familia">Familia</Link></div>
+        <details className="fold">
+        <summary className="section-head">
+          <h2 id="h-resp">Responsabilidades <span className="count">{pl(d.tasks.filter((t) => !t.isSeries && t.status !== 'completada' && t.assigneeId).length, 'tarea abierta', 'tareas abiertas')}</span></h2>
+          <ChevronDown className="fold-chevron" size={20} aria-hidden="true" />
+        </summary>
         <div className="card"><ul className="list">{profiles.filter((p) => p.active && p.role !== 'family').map((p) => {
           const open = d.tasks.filter((t) => !t.isSeries && t.status !== 'completada' && t.assigneeId === p.id);
           const late = open.filter((t) => t.dueDate && t.dueDate < t0).length;
-          return <li key={p.id}><Link className="item" to="/familia"><Avatar profile={p} /><div className="item-main"><div className="item-title">{p.name}</div><div className="item-sub">{open.length} tarea(s) abierta(s)</div></div>{late > 0 && <StatusChip tone="alert">{late} atrasada(s)</StatusChip>}</Link></li>;
+          return <li key={p.id}><Link className="item" to="/familia"><Avatar profile={p} /><div className="item-main"><div className="item-title">{p.name}</div><div className="item-sub">{pl(open.length, 'tarea abierta', 'tareas abiertas')}</div></div>{late > 0 && <StatusChip tone="alert">{late} atrasada(s)</StatusChip>}</Link></li>;
         })}</ul></div>
+        <Link to="/familia" className="fold-link">Ver familia</Link>
+        </details>
       </section>
     ),
     bandeja: () => d.captures.length ? (

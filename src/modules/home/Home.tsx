@@ -11,7 +11,6 @@ import { DEFAULT_HOME_BLOCKS } from '../../services/seed';
 import { completeTask, reopenTask } from '../../services/tasks';
 import { Avatar, Banner, ProfileStrip, StatusChip } from '../../ui/components';
 import { EventCard, TaskCard, eventPeople } from '../../ui/Cards';
-import { MODULE_COLOR, tones, type ModuleId } from '../../ui/theme';
 import { TaskSheet } from '../tasks/TaskSheet';
 import { EventSheet } from '../agenda/EventSheet';
 import { AskSheet } from '../shopping/AskSheet';
@@ -40,31 +39,28 @@ export function scopeFor(profile?: Profile) {
   };
 }
 
-function QuickCircle({ to, label, Icon, color, onClick }: { to?: string; label: string; Icon: any; color: ModuleId; onClick?: () => void }) {
-  const t = tones(MODULE_COLOR[color]);
-  const inner = <><span className="circle" style={{ background: t.base, color: t.on }}><Icon size={24} strokeWidth={2.2} /></span><span className="lbl">{label}</span></>;
+function QuickCircle({ to, label, Icon, onClick }: { to?: string; label: string; Icon: any; onClick?: () => void }) {
+  const inner = <><span className="circle"><Icon size={24} strokeWidth={2.2} /></span><span className="lbl">{label}</span></>;
   return to ? <Link to={to}>{inner}</Link> : <button type="button" onClick={onClick}>{inner}</button>;
 }
 
 /** "Foto": abre la cámara del celular en el mismo toque (en computadora, el selector de archivos). */
 function CameraCircle({ onPhotos }: { onPhotos: (f: File[]) => void }) {
-  const t = tones(MODULE_COLOR.agenda);
   return (
     <label className="quick-camera" aria-label="Foto: abrir la cámara">
-      <span className="circle" style={{ background: t.base, color: t.on }}><Camera size={24} strokeWidth={2.2} /></span><span className="lbl">Foto</span>
+      <span className="circle"><Camera size={24} strokeWidth={2.2} /></span><span className="lbl">Foto</span>
       <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />
     </label>
   );
 }
 
-function Tile({ to, label, meta, Icon, color, badge, alert }: { to: string; label: string; meta: string; Icon: any; color: ModuleId; badge?: number; alert?: boolean }) {
-  const t = tones(MODULE_COLOR[color]);
+function Tile({ to, label, meta, Icon, badge, alert }: { to: string; label: string; meta: string; Icon: any; badge?: number; alert?: boolean }) {
   return (
-    <Link to={to} className="tile" aria-label={`${label}: ${meta}`} style={{ background: t.base, color: t.on }}>
-      <span className="tile-icon" style={{ color: t.ink }}><Icon size={24} strokeWidth={2.2} /></span>
+    <Link to={to} className="tile" aria-label={`${label}: ${meta}`}>
+      <span className="tile-icon"><Icon size={24} strokeWidth={2.2} /></span>
       <span className="tile-label">{label}</span>
       <span className="tile-meta">{meta}</span>
-      {!!badge && <span className={`tile-badge${alert ? ' alert' : ''}`} style={alert ? undefined : { background: t.ink, color: '#fff' }}>{badge}</span>}
+      {!!badge && <span className={`tile-badge${alert ? ' alert' : ''}`} style={alert ? undefined : { background: 'var(--profile-ink)', color: '#fff' }}>{badge}</span>}
     </Link>
   );
 }
@@ -72,7 +68,7 @@ function Tile({ to, label, meta, Icon, color, badge, alert }: { to: string; labe
 function InvTile({ taxes }: { taxes: InvestmentTax[] }) {
   const pend = taxes.filter((t) => t.status !== 'pagado');
   const late = pend.filter((t) => t.dueDate && t.dueDate < today()).length;
-  return <Tile to="/inversiones" label="Inversiones" meta={pend.length ? pl(pend.length, 'impuesto pendiente', 'impuestos pendientes') : 'Al día'} Icon={Building2} color="inversiones" badge={late || pend.length} alert={late > 0} />;
+  return <Tile to="/inversiones" label="Inversiones" meta={pend.length ? pl(pend.length, 'impuesto pendiente', 'impuestos pendientes') : 'Al día'} Icon={Building2} badge={late || pend.length} alert={late > 0} />;
 }
 
 export default function Home() {
@@ -196,11 +192,11 @@ export default function Home() {
       </header>
 
       <div className="quick-round" role="group" aria-label="Captura rápida">
-        <QuickCircle to="/asistente?modo=texto" label="Escribir" Icon={Type} color="asistente" />
+        <QuickCircle to="/asistente?modo=texto" label="Escribir" Icon={Type} />
         <CameraCircle onPhotos={(f) => { setPendingPhotos(f); nav('/asistente?modo=foto'); }} />
-        <QuickCircle to="/asistente?modo=voz" label="Voz" Icon={Mic} color="familia" />
-        {isChild ? <QuickCircle label="Pedir algo" Icon={ShoppingCart} color="compras" onClick={() => setAsk(true)} />
-          : <QuickCircle to="/compras" label="Compras" Icon={ShoppingCart} color="compras" />}
+        <QuickCircle to="/asistente?modo=voz" label="Voz" Icon={Mic} />
+        {isChild ? <QuickCircle label="Pedir algo" Icon={ShoppingCart} onClick={() => setAsk(true)} />
+          : <QuickCircle to="/compras" label="Compras" Icon={ShoppingCart} />}
       </div>
 
       {isChild && (
@@ -212,15 +208,15 @@ export default function Home() {
 
       <div className="section-head"><span className="eyebrow">Secciones</span></div>
       <nav className="tiles" aria-label="Secciones">
-        <Tile to="/agenda" label="Agenda" meta={todayEvents.length ? `${pl(todayEvents.length, 'evento', 'eventos')} hoy` : 'Nada hoy'} Icon={CalendarDays} color="agenda" badge={todayEvents.length} />
-        <Tile to="/tareas" label="Tareas" meta={overdue.length ? pl(overdue.length, 'atrasada', 'atrasadas') : pl(openTasks.length, 'abierta', 'abiertas')} Icon={CheckSquare} color="tareas" badge={overdue.length || openTasks.length} alert={overdue.length > 0} />
-        <Tile to="/compras" label="Compras" meta={`${pendingItems.length} en la lista`} Icon={ShoppingCart} color="compras" badge={pendingItems.length} />
-        {can('finance.view') && <Tile to="/economia" label="Economía" meta={dues.length ? `${dues.length} por vencer` : 'Al día'} Icon={Wallet} color="economia" badge={dues.length} alert={dueAlert > 0} />}
+        <Tile to="/agenda" label="Agenda" meta={todayEvents.length ? `${pl(todayEvents.length, 'evento', 'eventos')} hoy` : 'Nada hoy'} Icon={CalendarDays} badge={todayEvents.length} />
+        <Tile to="/tareas" label="Tareas" meta={overdue.length ? pl(overdue.length, 'atrasada', 'atrasadas') : pl(openTasks.length, 'abierta', 'abiertas')} Icon={CheckSquare} badge={overdue.length || openTasks.length} alert={overdue.length > 0} />
+        <Tile to="/compras" label="Compras" meta={`${pendingItems.length} en la lista`} Icon={ShoppingCart} badge={pendingItems.length} />
+        {can('finance.view') && <Tile to="/economia" label="Economía" meta={dues.length ? `${dues.length} por vencer` : 'Al día'} Icon={Wallet} badge={dues.length} alert={dueAlert > 0} />}
         {can('finance.view') && <InvTile taxes={d.invTaxes} />}
-        {!isChild && <Tile to="/casa" label="Casa" meta={openRepairs.length ? pl(openRepairs.length, 'reparación', 'reparaciones') : 'Todo en orden'} Icon={Wrench} color="casa" badge={openRepairs.length} />}
-        <Tile to="/documentos" label="Documentos" meta="Archivo" Icon={FileText} color="documentos" />
-        <Tile to="/familia" label="Familia" meta="Perfiles" Icon={Users} color="familia" />
-        <Tile to="/asistente" label="Bandeja" meta={d.captures.length ? `${d.captures.length} por revisar` : 'Al día'} Icon={Inbox} color="asistente" badge={d.captures.length} />
+        {!isChild && <Tile to="/casa" label="Casa" meta={openRepairs.length ? pl(openRepairs.length, 'reparación', 'reparaciones') : 'Todo en orden'} Icon={Wrench} badge={openRepairs.length} />}
+        <Tile to="/documentos" label="Documentos" meta="Archivo" Icon={FileText} />
+        <Tile to="/familia" label="Familia" meta="Perfiles" Icon={Users} />
+        <Tile to="/asistente" label="Bandeja" meta={d.captures.length ? `${d.captures.length} por revisar` : 'Al día'} Icon={Inbox} badge={d.captures.length} />
       </nav>
 
       {blocks.map((b) => render[b]?.())}

@@ -5,7 +5,9 @@ import { useApp, useLive } from '../../app/context';
 import type { Capture } from '../../domain/types';
 import { Banner, Empty, Segmented, StatusChip } from '../../ui/components';
 import { FilePickButton, iconFor } from '../../ui/records';
-import { cancelCapture, captureNotes, createCapture, processCapture, type SavedRecord } from '../../ai/pipeline';
+import { cancelCapture, captureNotes, changeKind, createCapture, processCapture, saveReview, type SavedRecord } from '../../ai/pipeline';
+import { PhotoMode, VoiceMode, type Destination } from './QuickModes';
+import { takePendingPhotos } from './pendingPhoto';
 import { ocrImage, speechRecognitionAvailable, startLiveRecognition, startRecording, transcribeWithWhisper, type LiveRecognizer } from '../../ai/processors';
 import { extractPdfText } from '../../services/documents';
 import { humanSize } from '../../services/files';
@@ -32,6 +34,9 @@ export default function Assistant() {
   const [recording, setRecording] = useState<null | { stop: () => Promise<Blob>; rec: LiveRecognizer | null; started: number }>(null);
   const [interim, setInterim] = useState('');
   const [gmailOpen, setGmailOpen] = useState(false);
+  // Modo según el botón de Inicio: texto, foto (cámara directa) o voz (micrófono directo); sin modo = pantalla completa.
+  const [mode, setMode] = useState<'general' | 'texto' | 'foto' | 'voz'>(() => (['texto', 'foto', 'voz'].includes(params.get('modo') ?? '') ? params.get('modo') as any : 'general'));
+  const [dest, setDest] = useState<Destination>('auto');
   const cancelled = useRef(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const captures = useLive((r) => r.db.entity('captures').orderBy('createdAt').reverse().filter((c) => !c.deleted).limit(150).toArray(), [], [] as Capture[]);
@@ -41,6 +46,7 @@ export default function Assistant() {
   useEffect(() => {
     const modo = params.get('modo');
     if (modo === 'texto') setTimeout(() => textRef.current?.focus(), 50);
+    if (modo === 'foto') { const p = takePendingPhotos(); if (p.length) addFiles(p); }
     if (params.get('compartido')) loadShared();
     if (params.get('nota')) setTab('historial');
   }, []);
@@ -86,21 +92,41 @@ export default function Assistant() {
     setRecording(null); setInterim('');
   };
 
-  const interpret = async () => {
+  const interpret = (over?: { text?: string; kind?: Capture['kind']; dest?: Destination }) => interpretCore({ text: over?.text ?? text, files: over?.text !== undefined ? [] : files, transcript: over?.text !== undefined ? '' : transcript, kind: over?.kind, dest: over?.dest ?? 'auto' });
+
+  /** Si se eligió a dónde va (botón Foto), la propuesta principal se convierte a ese tipo antes de la revisión. */
+  const applyDestination = async (captureId: string, d: Destination) => {
+    if (d === 'auto') return;
+    const cap = await repo.get('captures', captureId);
+    if (!cap) return;
+    let ps = [...cap.proposals];
+    if (!ps.some((p) => p.kind === d)) {
+      const i = ps.findIndex((p) => p.kind !== 'documento');
+      if (i >= 0) ps[i] = changeKind(ps[i], d);
+      else if (ps.length) ps = [...ps, { ...changeKind(ps[0], d), id: ps[0].id + '-dest', groupId: ps[0].groupId }];
+    }
+    if (d !== 'documento') ps = ps.map((p) => (p.kind === 'documento' ? { ...p, include: false } : p));
+    await saveReview(repo, captureId, ps);
+  };
+
+  const interpretCore = async (input: { text: string; files: { blob: Blob; name: string }[]; transcript: string; kind?: Capture['kind']; dest: Destination }) => {
+    const { text, files, transcript, dest } = input;
     if (!text.trim() && !files.length && !transcript.trim()) { toast('Escribí, pegá o adjuntá algo para interpretar.', { tone: 'error' }); return; }
     cancelled.current = false;
     setBusy('Guardando la captura…');
-    const kind = files.some((f) => f.blob.type.startsWith('audio/')) ? (transcript ? 'voz' : 'audio') : files.some((f) => f.blob.type === 'application/pdf') ? 'documento' : files.length ? 'imagen' : 'texto';
+    const kind = input.kind ?? (dest === 'documento' ? 'documento' : files.some((f) => f.blob.type.startsWith('audio/')) ? (transcript ? 'voz' : 'audio') : files.some((f) => f.blob.type === 'application/pdf') ? 'documento' : files.length ? 'imagen' : 'texto');
     const c = await run(() => createCapture(repo, { kind, text, transcript: transcript || undefined, files, by: profile?.id }));
     if (!c) { setBusy(null); return; }
     setText(''); setFiles([]); setTranscript('');
+    // La lectura de texto de la foto (OCR) solo hace falta para facturas, documentos o cuando decide el asistente.
+    const settings = dest === 'auto' || dest === 'pago' || dest === 'gasto' || dest === 'documento' || dest === 'evento' ? ai : { ...ai, ocr: false };
     const processed = await run(() => processCapture(repo, c.id, {
-      settings: ai, currentProfileId: profile?.id,
+      settings, currentProfileId: profile?.id,
       extractors: { ocr: (b) => ocrImage(b, (m) => setBusy(m)), pdf: extractPdfText, transcribe: (b) => transcribeWithWhisper(b, (m) => setBusy(m)), onProgress: setBusy },
     }));
     setBusy(null);
     if (cancelled.current) { await cancelCapture(repo, c.id, profile?.id); toast('Captura cancelada. No se guardó ningún registro.'); return; }
-    if (processed) setReviewId(c.id);
+    if (processed) { await applyDestination(c.id, dest); setReviewId(c.id); }
     else toast('La captura quedó guardada en "Por revisar" para intentarlo de nuevo.', { tone: 'error' });
   };
 
@@ -119,10 +145,25 @@ export default function Assistant() {
         <Segmented label="Asistente" value={tab} onChange={setTab} options={[{ value: 'capturar', label: 'Capturar' }, { value: 'revisar', label: 'Por revisar', badge: pending.length }, { value: 'historial', label: 'Historial' }]} />
       </div>
 
-      {tab === 'capturar' && (
+      {tab === 'capturar' && mode === 'foto' && (
+        <div className="stack">
+          <PhotoMode files={files} onAddPhotos={addFiles} onRemove={(i) => setFiles((x) => x.filter((_, k) => k !== i))} dest={dest} setDest={setDest}
+            text={text} setText={setText} busy={!!busy} onSubmit={() => interpretCore({ text, files, transcript: '', dest })} />
+          {busy && <div className="banner banner-info" role="status"><div style={{ flex: 1 }}>{busy}</div></div>}
+          <button type="button" className="link-btn" onClick={() => setMode('general')}>Ver todas las opciones de captura</button>
+        </div>
+      )}
+      {tab === 'capturar' && mode === 'voz' && (
+        <div className="stack">
+          <VoiceMode busy={!!busy} onError={(m) => toast(m, { tone: 'error' })} onSubmit={(t) => interpretCore({ text: t, files: [], transcript: '', kind: 'voz', dest: 'auto' })} />
+          {busy && <div className="banner banner-info" role="status"><div style={{ flex: 1 }}>{busy}</div></div>}
+          <button type="button" className="link-btn" onClick={() => setMode('general')}>Ver todas las opciones de captura</button>
+        </div>
+      )}
+      {tab === 'capturar' && (mode === 'general' || mode === 'texto') && (
         <div className="stack">
           <div className="card card-pad stack">
-            <label htmlFor="captura-texto" className="field-label">Escribí, pegá un mensaje de WhatsApp o un correo, o adjuntá una foto, un documento o un audio</label>
+            <label htmlFor="captura-texto" className="field-label">{mode === 'texto' ? 'Escribí o pegá lo que haya que anotar (un mensaje, un correo, una lista…)' : 'Escribí, pegá un mensaje de WhatsApp o un correo, o adjuntá una foto, un documento o un audio'}</label>
             <textarea id="captura-texto" ref={textRef} className="input" rows={5} value={text} onChange={(e) => setText(e.target.value)}
               placeholder="Ej.: Mañana a las 18 reunión de padres. Hay que comprar leche y pan. El 20 vence la luz $45.000" />
             {(recording || transcript) && (
@@ -147,15 +188,15 @@ export default function Assistant() {
               <FilePickButton label="Foto o captura" accept="image/*" onFiles={addFiles} />
               <FilePickButton label="Cámara" accept="image/*" capture="environment" multiple={false} onFiles={addFiles} />
               <FilePickButton label="Documento" accept="application/pdf,image/*,.doc,.docx,.txt" onFiles={addFiles} />
-              <FilePickButton label="Audio" accept="audio/*,.ogg,.opus,.m4a,.mp3,.aac,.wav" onFiles={addFiles} />
-              {recording ? <button className="btn btn-sm btn-danger" onClick={stopVoice}><Square size={16} /> Detener</button>
-                : <button className="btn btn-sm" onClick={startVoice} disabled={!navigator.mediaDevices}><Mic size={16} /> Grabar voz</button>}
+              {mode === 'general' && <FilePickButton label="Audio" accept="audio/*,.ogg,.opus,.m4a,.mp3,.aac,.wav" onFiles={addFiles} />}
+              {mode === 'general' && (recording ? <button className="btn btn-sm btn-danger" onClick={stopVoice}><Square size={16} /> Detener</button>
+                : <button className="btn btn-sm" onClick={startVoice} disabled={!navigator.mediaDevices}><Mic size={16} /> Grabar voz</button>)}
             </div>
             <div className="row">
               <span className="muted tiny" style={{ flex: 1 }}>
                 {ai.mode === 'manual' ? 'Interpretación automática desactivada: vas a completar los datos a mano.' : 'Se interpreta en este dispositivo con reglas locales. Nada se guarda sin tu confirmación.'}
               </span>
-              <button className="btn btn-primary" onClick={interpret} disabled={!!busy || !!recording}><Send size={16} /> Interpretar</button>
+              <button className="btn btn-primary" onClick={() => interpret()} disabled={!!busy || !!recording}><Send size={16} /> Interpretar</button>
             </div>
             {busy && (
               <div className="banner banner-info" role="status">

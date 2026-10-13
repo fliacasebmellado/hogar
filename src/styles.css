@@ -601,3 +601,19 @@ h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .stro
 /* Capa de avisos en el "top layer" (popover): sin el estilo por defecto del navegador */
 .toasts[popover] { inset: auto; left: 50%; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; color: inherit; }
 .error-inline { color: var(--alert-fg); background: var(--alert-bg); padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; }
+/* Modos rápidos del Asistente (Foto y Voz) */
+.quick-camera { display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; color: var(--text); }
+.quick-camera .circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.quick-camera .lbl { font-size: 0.75rem; text-align: center; line-height: 1.2; }
+.camera-big { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 180px; border-radius: var(--radius); background: var(--band); color: var(--text); cursor: pointer; font-weight: 700; }
+.photo-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.photo-thumb { position: relative; flex-shrink: 0; }
+.photo-thumb img { width: 150px; height: 190px; object-fit: cover; border-radius: 16px; display: block; }
+.photo-thumb .icon-btn { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.85); border-radius: 50%; }
+.photo-add { flex-shrink: 0; width: 70px; height: 190px; border-radius: 16px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); }
+.quick-mode { text-align: left; }
+.mic-big { width: 110px; height: 110px; margin: 10px auto 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--band); color: var(--text); }
+.mic-big.on { animation: mic-pulse 1.4s ease-in-out infinite; }
+@keyframes mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--profile-raw) 45%, transparent); } 50% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--profile-raw) 0%, transparent); } }
+.voice-status { text-align: center; font-weight: 700; font-size: 1.05rem; }
+.voice-text { min-height: 70px; padding: 14px 16px; border-radius: 14px; background: var(--surface-2); font-size: 1.05rem; line-height: 1.5; }

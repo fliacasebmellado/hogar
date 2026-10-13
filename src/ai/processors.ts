@@ -23,7 +23,7 @@ export function speechRecognitionAvailable(): boolean {
   return typeof window !== 'undefined' && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 }
 
-export interface LiveRecognizer { stop(): void; onText: (final: string, interim: string) => void; onError: (e: string) => void }
+export interface LiveRecognizer { stop(): void; onText: (final: string, interim: string) => void; onError: (e: string) => void; onEnd?: () => void }
 
 export function startLiveRecognition(lang = 'es-AR'): LiveRecognizer | null {
   const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -43,6 +43,7 @@ export function startLiveRecognition(lang = 'es-AR'): LiveRecognizer | null {
     }
     handle.onText(finalText.trim(), interim);
   };
+  rec.onend = () => handle.onEnd?.();
   rec.onerror = (e: any) => handle.onError(e.error === 'not-allowed' ? 'Permiso de micrófono denegado.' : e.error === 'network' ? 'El reconocimiento de voz necesita conexión.' : `Reconocimiento de voz: ${e.error}`);
   try { rec.start(); } catch (e: any) { return null; }
   return handle;

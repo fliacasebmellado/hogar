@@ -267,3 +267,34 @@ test('foto de perfil: se recorta, se guarda en el perfil y se ve en el avatar', 
   expect(src!.startsWith('data:image/jpeg')).toBe(true);
   expect(src!.length).toBeLessThan(45_000);
 });
+
+test('botón Foto de Inicio: abre la cámara, se elige el destino y se revisa', async ({ page }) => {
+  await enter(page, 'Mamá');
+  const png = await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 300; c.height = 400;
+    const x = c.getContext('2d')!; x.fillStyle = '#c29a5b'; x.fillRect(0, 0, 300, 400);
+    const b: Blob = await new Promise((r) => c.toBlob((bb) => r(bb!), 'image/png'));
+    return Array.from(new Uint8Array(await b.arrayBuffer()));
+  });
+  await page.locator('label.quick-camera input[type=file]').setInputFiles({ name: 'repuesto.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+  await expect(page).toHaveURL(/modo=foto/);
+  await expect(page.getByRole('img', { name: 'Foto 1' })).toBeVisible();
+  await page.getByRole('button', { name: /Compras/ }).click();
+  await page.getByLabel(/Qué hay que hacer con esta foto/).fill('Filtro de la pileta');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('combobox', { name: 'Tipo de registro' }).first()).toHaveValue('compra');
+});
+
+test('botones Escribir y Voz de Inicio: sin opciones de audio al escribir; la voz abre el dictado', async ({ page }) => {
+  await enter(page, 'Mamá');
+  await page.getByRole('link', { name: 'Escribir' }).click();
+  await expect(page.getByLabel(/Escribí o pegá lo que haya que anotar/)).toBeFocused();
+  await expect(page.getByRole('button', { name: /Grabar voz/ })).toHaveCount(0);
+  await page.goto('./#/');
+  await page.locator('.quick-round').getByRole('link', { name: 'Voz', exact: true }).click();
+  await expect(page).toHaveURL(/modo=voz/);
+  // En Chromium de pruebas no hay reconocimiento de voz: se muestra la alternativa o el micrófono
+  await expect(page.getByText(/no permite dictar por voz|Te escucho|Tocá el micrófono|Listo/).first()).toBeVisible();
+});

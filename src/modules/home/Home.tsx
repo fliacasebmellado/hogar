@@ -15,6 +15,7 @@ import { MODULE_COLOR, tones, type ModuleId } from '../../ui/theme';
 import { TaskSheet } from '../tasks/TaskSheet';
 import { EventSheet } from '../agenda/EventSheet';
 import { AskSheet } from '../shopping/AskSheet';
+import { setPendingPhotos } from '../inbox/pendingPhoto';
 
 export const HOME_BLOCK_LABEL: Record<string, string> = {
   agenda: 'Agenda', tareas: 'Tareas', pagos: 'Pagos próximos', compras: 'Compras pendientes', casa: 'Casa y mantenimiento',
@@ -43,6 +44,17 @@ function QuickCircle({ to, label, Icon, color, onClick }: { to?: string; label: 
   const t = tones(MODULE_COLOR[color]);
   const inner = <><span className="circle" style={{ background: t.base, color: t.on }}><Icon size={24} strokeWidth={2.2} /></span><span className="lbl">{label}</span></>;
   return to ? <Link to={to}>{inner}</Link> : <button type="button" onClick={onClick}>{inner}</button>;
+}
+
+/** "Foto": abre la cámara del celular en el mismo toque (en computadora, el selector de archivos). */
+function CameraCircle({ onPhotos }: { onPhotos: (f: File[]) => void }) {
+  const t = tones(MODULE_COLOR.agenda);
+  return (
+    <label className="quick-camera" aria-label="Foto: abrir la cámara">
+      <span className="circle" style={{ background: t.base, color: t.on }}><Camera size={24} strokeWidth={2.2} /></span><span className="lbl">Foto</span>
+      <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />
+    </label>
+  );
 }
 
 function Tile({ to, label, meta, Icon, color, badge, alert }: { to: string; label: string; meta: string; Icon: any; color: ModuleId; badge?: number; alert?: boolean }) {
@@ -185,7 +197,7 @@ export default function Home() {
 
       <div className="quick-round" role="group" aria-label="Captura rápida">
         <QuickCircle to="/asistente?modo=texto" label="Escribir" Icon={Type} color="asistente" />
-        <QuickCircle to="/asistente?modo=foto" label="Foto" Icon={Camera} color="agenda" />
+        <CameraCircle onPhotos={(f) => { setPendingPhotos(f); nav('/asistente?modo=foto'); }} />
         <QuickCircle to="/asistente?modo=voz" label="Voz" Icon={Mic} color="familia" />
         {isChild ? <QuickCircle label="Pedir algo" Icon={ShoppingCart} color="compras" onClick={() => setAsk(true)} />
           : <QuickCircle to="/compras" label="Compras" Icon={ShoppingCart} color="compras" />}

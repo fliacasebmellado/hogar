@@ -580,3 +580,21 @@ details.fold[open] > summary { margin-bottom: 10px; }
 details.fold .fold-link { display: inline-block; margin-top: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text); background: rgba(255, 255, 255, 0.55); border-radius: 999px; padding: 5px 12px; text-decoration: none; }
 section[aria-labelledby^='h-'] details.fold > summary.section-head { margin-bottom: 0; }
 section[aria-labelledby^='h-'] details.fold[open] > summary.section-head { margin-bottom: 10px; }
+/* Fotos de perfil */
+.avatar.has-photo { overflow: hidden; padding: 0; }
+.avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-edit { display: flex; align-items: center; gap: 16px; }
+.avatar-edit .avatar { border: 3px solid var(--surface); box-shadow: var(--shadow); }
+
+/* Tipografía: Calibri Light para el texto y Calibri (normal y negrita) para títulos y destacados.
+   Calibri viene con Windows y Office; en Android/iPhone se usa Carlito, su equivalente libre con las mismas medidas. */
+@font-face { font-family: 'Hogar Calibri'; font-weight: 300; font-style: normal; src: local('Calibri Light'), local('Calibri-Light'); }
+@font-face { font-family: 'Hogar Calibri'; font-weight: 400; font-style: normal; src: local('Calibri'), local('Calibri-Regular'); }
+@font-face { font-family: 'Hogar Calibri'; font-weight: 700; font-style: normal; src: local('Calibri Bold'), local('Calibri-Bold'); }
+:root { --font: 'Hogar Calibri', 'Calibri', 'Carlito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+body { font-family: var(--font); font-weight: 300; font-size: 16.5px; }
+button, input, select, textarea { font-family: var(--font); }
+h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .strong, strong, b, .btn, .num-big, .day-pill .dnum, .section-head h2 { font-weight: 700; }
+.item-sub, .tile-meta, .muted, .hint, .ev-sub, .date { font-weight: 300; }
+.field > label, .field-label, .chip, .bottomnav a, .bottomnav button, .quick-round .lbl, .pstrip .pname, .eyebrow { font-weight: 400; }
+.bottomnav a.active, .bottomnav button.active, .pstrip button[aria-pressed='true'] .pname { font-weight: 700; }

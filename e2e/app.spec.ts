@@ -247,3 +247,23 @@ test('inversiones: visibles para adultos, ocultas para chicos y el perfil Famili
   await page.goto('./#/inversiones');
   await expect(page.getByText(/no está disponible para el perfil Hijo/)).toBeVisible();
 });
+
+test('foto de perfil: se recorta, se guarda en el perfil y se ve en el avatar', async ({ page }) => {
+  await enter(page, 'Papá');
+  await page.goto('./#/familia');
+  await page.getByRole('button', { name: 'Editar', exact: true }).first().click();
+  // Imagen generada en el momento (no se usan fotos reales)
+  const png = await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 600; c.height = 800;
+    const x = c.getContext('2d')!; x.fillStyle = '#6f87a3'; x.fillRect(0, 0, 600, 800); x.fillStyle = '#f2c9a0'; x.beginPath(); x.arc(300, 300, 120, 0, 7); x.fill();
+    const b: Blob = await new Promise((r) => c.toBlob((bb) => r(bb!), 'image/png'));
+    return Array.from(new Uint8Array(await b.arrayBuffer()));
+  });
+  await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+  await expect(page.getByText('Quitar foto')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('.avatar.has-photo img').first()).toBeVisible();
+  const src = await page.locator('.avatar.has-photo img').first().getAttribute('src');
+  expect(src!.startsWith('data:image/jpeg')).toBe(true);
+  expect(src!.length).toBeLessThan(45_000);
+});

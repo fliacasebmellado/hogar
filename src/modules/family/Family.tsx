@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, ImagePlus, X } from 'lucide-react';
+import { isPhotoAvatar, photoToAvatar } from '../../services/avatarPhoto';
 import { useApp, useLive } from '../../app/context';
 import type { CalendarEvent, DocumentRecord, Profile, Task } from '../../domain/types';
 import { Avatar, Banner, Empty, StatusChip } from '../../ui/components';
@@ -99,7 +100,7 @@ function ProfileSheet({ open, profile: target, onClose }: { open: boolean; profi
   const save = async () => {
     const { id, version, createdAt, updatedAt, rev, _sync, ...data } = d as any;
     data.aliases = aliases.split(',').map((s: string) => s.trim()).filter(Boolean);
-    data.avatar = (data.avatar || data.name?.charAt(0) || '?').slice(0, 2);
+    if (!isPhotoAvatar(data.avatar)) data.avatar = (data.avatar || data.name?.charAt(0) || '?').slice(0, 2);
     if (pin) data.pinHash = await hashPin(pin, target?.id ?? 'nuevo');
     const ok = await run(async () => {
       if (target) return repo.update('profiles', target.id, data, { by: profile?.id });
@@ -120,8 +121,24 @@ function ProfileSheet({ open, profile: target, onClose }: { open: boolean; profi
       footer={<><button className="btn" onClick={onClose}>Cancelar</button><button className="btn btn-primary" onClick={save}>Guardar</button></>}>
       <div className="form">
         <TextField label="Nombre" required value={d.name} onChange={(v) => setD({ ...d, name: v })} />
+        <div className="field">
+          <span className="field-label">Foto o inicial</span>
+          <div className="avatar-edit">
+            <Avatar profile={{ name: d.name || '?', color: d.color || '#c2bbb4', avatar: d.avatar ?? '' }} size={72} />
+            <div className="row-wrap">
+              <label className="btn btn-sm"><ImagePlus size={16} /> {isPhotoAvatar(d.avatar) ? 'Cambiar foto' : 'Subir foto'}
+                <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                  const f = e.target.files?.[0]; e.target.value = '';
+                  if (f) await run(async () => setD({ ...d, avatar: await photoToAvatar(f, d.role === 'family') }), 'Foto lista: tocá Guardar');
+                }} />
+              </label>
+              {isPhotoAvatar(d.avatar) && <button type="button" className="btn btn-sm btn-ghost" onClick={() => setD({ ...d, avatar: d.name?.charAt(0) ?? '' })}><X size={16} /> Quitar foto</button>}
+            </div>
+          </div>
+          <span className="hint">La foto se guarda en la planilla privada de la familia y se ve en todos los dispositivos conectados.</span>
+        </div>
         <div className="form-row">
-          <TextField label="Avatar (inicial o emoji)" value={d.avatar} onChange={(v) => setD({ ...d, avatar: v })} />
+          {!isPhotoAvatar(d.avatar) && <TextField label="Inicial o emoji" value={d.avatar} onChange={(v) => setD({ ...d, avatar: v })} />}
           {manage && <SelectField label="Tipo de perfil" value={d.role} onChange={(v) => setD({ ...d, role: v as any })} options={[{ value: 'adult', label: 'Adulto' }, { value: 'child', label: 'Chico/a' }, { value: 'family', label: 'Familia (todos juntos)' }]} />}
         </div>
         <div className="field" role="group" aria-label="Color identificador">

@@ -4,13 +4,16 @@ import { AlertTriangle, CheckCircle2, CloudOff, Info, Check } from 'lucide-react
 import type { Profile, SyncState } from '../domain/types';
 import type { Category } from '../domain/catalog';
 import { mix, onColor } from './theme';
+import { isPhotoAvatar } from '../services/avatarPhoto';
 
 export function Avatar({ profile, size, large }: { profile?: Pick<Profile, 'name' | 'color' | 'avatar'>; size?: number; large?: boolean }) {
   if (!profile) return <span className="avatar" style={{ background: 'var(--surface-3)' }} aria-hidden="true">?</span>;
   const bg = mix(profile.color, '#ffffff', 0.5); // paleta al 50 %
   const style: React.CSSProperties = { background: bg, color: onColor(bg) };
   if (size) Object.assign(style, { width: size, height: size, fontSize: size * 0.45, borderWidth: 0 });
-  return <span className={`avatar${large ? ' avatar-lg' : ''}`} style={style} aria-hidden="true">{profile.avatar || profile.name.charAt(0)}</span>;
+  return <span className={`avatar${large ? ' avatar-lg' : ''}${isPhotoAvatar(profile.avatar) ? ' has-photo' : ''}`} style={style} aria-hidden="true">
+    {isPhotoAvatar(profile.avatar) ? <img src={profile.avatar} alt="" /> : profile.avatar || profile.name.charAt(0)}
+  </span>;
 }
 
 export function AvatarStack({ ids, profiles }: { ids: string[]; profiles: Profile[] }) {

@@ -34,6 +34,55 @@ export function findDuplicateItem(items: ShoppingItem[], listId: ID, name: strin
 export type ItemInput = Partial<ShoppingItem> & { name: string; listId: ID };
 
 /** Agrega un producto. Si ya hay uno equivalente pendiente en la lista, devuelve `duplicate` sin crear nada. */
+/** "Comprar bananas" → "Bananas": se saca el verbo del principio y se pone mayúscula. */
+export function cleanItemName(s: string): string {
+  const t = s.trim().replace(/^(comprar|compra|comprame|traer|conseguir|hay que comprar|falta|faltan)\s+/i, '').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
+}
+
+/**
+ * Compras usa UNA sola lista agrupada por rubro. Esto deja todo así:
+ * - Las listas sueltas que se hayan creado (no las "habituales") se pasan a la lista principal: sus productos se mueven
+ *   (si la lista se llamaba como un rubro, p. ej. "Farmacia", los productos quedan en ese rubro) y la lista se marca como
+ *   eliminada (queda en el historial y en la planilla; no se pierde nada).
+ * - Una sola vez por dispositivo: productos pendientes que quedaron en "Supermercado" pero son de otro rubro
+ *   ("Codo 110" → Ferretería) y nombres que empiezan con "Comprar …".
+ */
+export async function tidyShopping(repo: Repo, guess: (name: string) => string, categories: { id: string; label: string }[], by?: ID) {
+  const lists = await repo.list('shoppingLists');
+  const extra = lists.filter((l) => !l.isTemplate && l.id !== DEFAULT_LIST_ID);
+  const items = await repo.list('shoppingItems');
+  const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let changed = 0;
+  if (extra.length && await repo.get('shoppingLists', DEFAULT_LIST_ID)) {
+    await repo.tx(async () => {
+      for (const l of extra) {
+        const asCat = categories.find((c) => fold(c.label).split(/[\s/]+/).some((w) => w.length > 3 && fold(l.name).includes(w)));
+        for (const i of items.filter((x) => x.listId === l.id)) {
+          await repo.update('shoppingItems', i.id, { listId: DEFAULT_LIST_ID, ...(asCat && (!i.category || i.category === 'supermercado') ? { category: asCat.id } : {}) }, { by });
+          changed++;
+        }
+        await repo.remove('shoppingLists', l.id, { by });
+        changed++;
+      }
+    });
+  }
+  if (!(await repo.db.getKV<boolean>('shoppingTidyV1', false)) && items.length) {
+    await repo.tx(async () => {
+      for (const i of items.filter((x) => x.status === 'pendiente' && !x.mergedInto)) {
+        const name = cleanItemName(i.name);
+        const g = guess(name);
+        const patch: Partial<ShoppingItem> = {};
+        if (name && name !== i.name) patch.name = name;
+        if ((i.category ?? 'supermercado') === 'supermercado' && g !== 'supermercado' && categories.some((c) => c.id === g)) patch.category = g;
+        if (Object.keys(patch).length) { await repo.update('shoppingItems', i.id, patch, { by }); changed++; }
+      }
+    });
+    await repo.db.setKV('shoppingTidyV1', true);
+  }
+  return changed;
+}
+
 export async function addItem(repo: Repo, data: ItemInput, opts: { by?: ID; allowDuplicate?: boolean; origin?: any } = {}):
   Promise<{ item?: ShoppingItem; duplicate?: ShoppingItem }> {
   const all = await repo.list('shoppingItems');

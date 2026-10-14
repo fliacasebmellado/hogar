@@ -358,3 +358,28 @@ describe('paleta de perfiles', () => {
     expect((await r.get('profiles', 'profile-y'))!.color).toBe('#123456');
   });
 });
+
+describe('compras por rubro', () => {
+  it('ubica productos de ferretería y saca "Comprar" del nombre', async () => {
+    const { guessShopCategory } = await import('../src/ai/rules');
+    const { cleanItemName } = await import('../src/services/shopping');
+    for (const n of ['Codo 110', 'Rejilla pluvial . codo 110', 'Caño de PVC los codos de 110', 'Codo de PVC en ferretería']) expect(guessShopCategory(n)).toBe('ferreteria');
+    expect(guessShopCategory('liquido para limpiar zapatos')).toBe('limpieza');
+    expect(guessShopCategory('Uvas')).toBe('supermercado');
+    expect(cleanItemName('Comprar bananas')).toBe('Bananas');
+  });
+  it('pasa las listas sueltas a la lista principal (sin perder productos) y corrige rubros una vez', async () => {
+    const { tidyShopping, DEFAULT_LIST_ID } = await import('../src/services/shopping');
+    const { guessShopCategory } = await import('../src/ai/rules');
+    const { categoriesFrom } = await import('../src/services/config');
+    const far = await repo.create('shoppingLists', { name: 'Farmacia', isTemplate: false, archived: false });
+    const hab = await repo.create('shoppingLists', { name: 'Habitual del mes', isTemplate: true, archived: false });
+    const a = await repo.create('shoppingItems', { listId: far.id, name: 'Ibuprofeno', category: 'supermercado', priority: 'media', status: 'pendiente' });
+    const b = await repo.create('shoppingItems', { listId: DEFAULT_LIST_ID, name: 'Codo 110', category: 'supermercado', priority: 'media', status: 'pendiente' });
+    await tidyShopping(repo, guessShopCategory, categoriesFrom([], 'shopping'));
+    expect(await repo.get('shoppingItems', a.id)).toMatchObject({ listId: DEFAULT_LIST_ID, category: 'farmacia' });
+    expect((await repo.get('shoppingItems', b.id))!.category).toBe('ferreteria');
+    expect((await repo.get('shoppingLists', far.id))!.deleted).toBe(true);
+    expect((await repo.get('shoppingLists', hab.id))!.deleted).toBeFalsy(); // las habituales no se tocan
+  });
+});

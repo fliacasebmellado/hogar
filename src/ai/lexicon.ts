@@ -108,7 +108,12 @@ export const MAINT_CATEGORY: [RegExp, string][] = [
 ];
 
 export const SHOP_CATEGORY: [RegExp, string][] = [
-  [/\b(lavandina|detergente|jabon en polvo|jabon liquido para ropa|suavizante|esponja|trapo|rejilla|bolsas de residuo|bolsas de basura|desengrasante|limpiador|cif|mr musculo|virulana|escoba|secador|lustramuebles|insecticida)\b/, 'limpieza'],
+  [/\b(ferreteria|corralon|pinturerias?|sanitarios)\b/, 'ferreteria'],
+  [/\b(farmacia|perfumeria)\b/, 'farmacia'],
+  [/\b(libreria|papeleria)\b/, 'libreria'],
+  [/\b(zapateria|ropa|calzado)\b/, 'ropa'],
+  [/\b(codos?|pvc|canos?|caneria|cupla|curvas?|tee|reduccion|rejilla pluvial|pluvial|desague|sifon|flexible|termofusion|teflon|sellador|bulones?|tuercas?|arandelas?|bisagras?|candado|llave de paso|canilla|griferia|mecha|mechas|taladro|destornillador|martillo|pinza|soldadura|alambre|malla|hierro|varilla|chapa|tirante|madera|machimbre|yeso|enduido|fratacho|balde de obra|cal|hidrofugo|plasticor|klaukol|adhesivo cementicio|tornillo|tornillos|clavos|lamparita|lamparitas|cinta|pintura|pegamento|pilas|pila|enchufe|zapatilla electrica|cable|cuerito|tarugos|lija|silicona|cemento|arena|ladrillos?|membrana|ceramicos?|pastina|durlock)\b/, 'ferreteria'],
+  [/\b(limpiar|limpia|limpiador de|lustrar|pomada para zapatos|lavandina|detergente|jabon en polvo|jabon liquido para ropa|suavizante|esponja|trapo|rejilla|bolsas de residuo|bolsas de basura|desengrasante|limpiador|cif|mr musculo|virulana|escoba|secador|lustramuebles|insecticida)\b/, 'limpieza'],
   [/\b(shampoo|champu|acondicionador|pasta dental|dentifrico|cepillo de dientes|desodorante|papel higienico|toallitas|panales|algodon|jabon|crema|maquinita|toallas femeninas|hilo dental)\b/, 'higiene'],
   [/\b(tornillo|tornillos|clavos|lamparita|lamparitas|cinta|pintura|pegamento|pilas|pila|enchufe|zapatilla electrica|cable|cuerito|tarugos|lija|silicona|cemento|arena|ladrillos?|membrana|ceramicos?|pastina|griferia|durlock)\b/, 'ferreteria'],
   [/\b(ibuprofeno|paracetamol|curitas|alcohol|remedio|remedios|aspirina|termometro|gasas|antitermico|jarabe|vitaminas|repelente|protector solar)\b/, 'farmacia'],

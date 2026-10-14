@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, ShoppingCart, Merge, ListPlus, Copy, Receipt } from 'lucide-react';
+import { Plus, ShoppingCart, Merge, Copy, Receipt } from 'lucide-react';
 import { useApp, useLive } from '../../app/context';
 import type { ShoppingItem, ShoppingList } from '../../domain/types';
 import { addItem, applyTemplate, DEFAULT_LIST_ID, markPurchased, mergeItems, productKey, saveAsTemplate, unmarkPurchased } from '../../services/shopping';
@@ -12,6 +12,9 @@ import { PRIORITY_LABEL, UNITS } from '../../domain/catalog';
 import { today } from '../../domain/dates';
 import { norm } from '../../services/tasks';
 import { AskSheet } from './AskSheet';
+import { guessShopCategory } from '../../ai/rules';
+import { cleanItemName, tidyShopping } from '../../services/shopping';
+import { ChevronDown } from 'lucide-react';
 import { categoryIcon, tones } from '../../ui/theme';
 
 function RequestedBy({ id }: { id: string }) {
@@ -23,7 +26,7 @@ function RequestedBy({ id }: { id: string }) {
 
 export default function Shopping() {
   const { repo, profile, profiles, categories, run, toast, can, backend } = useApp();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const lists = useLive((r) => r.list('shoppingLists'), [], [] as ShoppingList[]);
   const items = useLive((r) => r.list('shoppingItems'), [], [] as ShoppingItem[]);
   const [listId, setListId] = useState(params.get('lista') ?? DEFAULT_LIST_ID);
@@ -35,6 +38,10 @@ export default function Shopping() {
   const [showBought, setShowBought] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   useEffect(() => { const l = params.get('lista'); if (l) setListId(l); }, [params]);
+  // Rubros desplegables: se recuerda cuáles quedaron abiertos en este dispositivo.
+  const [open, setOpen] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('compras-abiertos') ?? '[]'); } catch { return []; } });
+  const setOpenCat = (id: string, on: boolean) => setOpen((o) => { const n = on ? [...new Set([...o, id])] : o.filter((x) => x !== id); try { localStorage.setItem('compras-abiertos', JSON.stringify(n)); } catch { /* sin almacenamiento */ } return n; });
+  useEffect(() => { if (profile?.role === 'adult') tidyShopping(repo, guessShopCategory, categories('shopping'), profile?.id).catch(() => {}); }, [lists.length, items.length > 0]);
 
   const active = lists.filter((l) => !l.isTemplate && !l.archived);
   const templates = lists.filter((l) => l.isTemplate && !l.archived);
@@ -51,11 +58,11 @@ export default function Shopping() {
   }, [inList]);
 
   const add = async (allowDuplicate = false, forced?: string) => {
-    const n = (forced ?? name).trim();
+    const n = cleanItemName(forced ?? name);
     if (!n || !list) return;
     const r = await run(() => addItem(repo, { listId: list.id, name: n, category: guessCat(n, cats.map((c) => c.id)), requestedBy: profile?.role === 'child' ? profile.id : undefined }, { by: profile?.id, allowDuplicate }));
     if (r?.duplicate) toast(`"${r.duplicate.name}" ya está en la lista.`, { action: { label: 'Agregar igual', run: () => add(true, n) } });
-    else if (r?.item) { setName(''); }
+    else if (r?.item) { setName(''); setOpenCat(r.item.category ?? 'supermercado', true); toast(`${r.item.name} → ${cats.find((c) => c.id === r.item!.category)?.label ?? 'Otros'}`, { tone: 'ok' }); }
   };
 
   const toggle = async (i: ShoppingItem) => {
@@ -70,10 +77,8 @@ export default function Shopping() {
 
   return (
     <div>
-      <div className="chips-toggle" role="tablist" aria-label="Listas" style={{ marginBottom: 10 }}>
-        {active.map((l) => <button key={l.id} role="tab" aria-pressed={l.id === list.id} aria-selected={l.id === list.id} onClick={() => { setListId(l.id); setParams({ lista: l.id }, { replace: true }); }}>{l.name} ({items.filter((i) => i.listId === l.id && i.status === 'pendiente' && !i.mergedInto).length})</button>)}
-        <button onClick={() => setListSheet('new')} aria-label="Nueva lista"><ListPlus size={16} /> Nueva</button>
-        <button onClick={() => setListSheet('templates')}><Copy size={16} /> Habituales</button>
+      <div className="row" style={{ marginBottom: 10, justifyContent: 'flex-end' }}>
+        <button className="btn btn-sm" onClick={() => setListSheet('templates')}><Copy size={16} /> Habituales</button>
       </div>
       {profile?.role === 'child' && (
         <button type="button" className="ask-card" style={{ marginTop: 0, marginBottom: 12 }} onClick={() => setAskOpen(true)}>
@@ -92,10 +97,15 @@ export default function Shopping() {
           <button className="link-btn" onClick={() => run(async () => { for (const g of dupGroups) await mergeItems(repo, g[0].id, g.slice(1).map((x) => x.id), profile?.id); }, 'Productos fusionados (sin perder notas ni cantidades)')}><Merge size={14} /> Fusionar</button>
         </Banner>
       )}
-      {grouped.length === 0 && <div className="card" style={{ marginTop: 10 }}><Empty icon={<ShoppingCart size={36} />} title="No hay productos pendientes en esta lista." /></div>}
+      {grouped.length === 0 && <div className="card" style={{ marginTop: 10 }}><Empty icon={<ShoppingCart size={36} />} title="No hay productos pendientes." /></div>}
       {grouped.map((g) => (
-        <section key={g.c.id}>
-          <div className="section-head"><h2><span aria-hidden="true">{categoryIcon('shopping', g.c.id)}</span> {g.c.label} <span className="count">{g.items.length}</span></h2></div>
+        <details key={g.c.id} className="rubro" open={open.includes(g.c.id) || !!q} onToggle={(e) => { if (!q) setOpenCat(g.c.id, (e.currentTarget as HTMLDetailsElement).open); }}>
+          <summary className="rubro-head">
+            <span className="rubro-ico" aria-hidden="true">{categoryIcon('shopping', g.c.id)}</span>
+            <span className="rubro-name">{g.c.label}</span>
+            <span className="rubro-count">{g.items.length}</span>
+            <ChevronDown className="rubro-chevron" size={20} aria-hidden="true" />
+          </summary>
           <div className="card"><ul className="list">
             {g.items.map((i) => (
               <li key={i.id}>
@@ -115,7 +125,7 @@ export default function Shopping() {
               </li>
             ))}
           </ul></div>
-        </section>
+        </details>
       ))}
       {bought.length > 0 && (
         <section>
@@ -149,6 +159,8 @@ export default function Shopping() {
 }
 
 function guessCat(name: string, valid: string[]): string {
+  const g = guessShopCategory(name);
+  if (g !== 'supermercado' && valid.includes(g)) return g;
   const n = norm(name);
   const map: [RegExp, string][] = [[/lavandina|detergente|esponja|trapo|suavizante|jabon en polvo|bolsas/, 'limpieza'], [/shampoo|pasta dental|desodorante|papel higienico|panal|toallita|jabon/, 'higiene'], [/ibuprofeno|paracetamol|curita|remedio|alcohol/, 'farmacia'], [/tornillo|lamparita|pila|cinta|pintura/, 'ferreteria'], [/cuaderno|lapiz|birome|carpeta|plasticola|utiles|cartulina|libro|fibras/, 'libreria'], [/cemento|arena|ladrillo|membrana|ceramico/, 'ferreteria'], [/zapato|bota|sandalia|ojota/, 'ropa'], [/medias|remera|zapatilla|pantalon|buzo/, 'ropa']];
   for (const [re, c] of map) if (re.test(n) && valid.includes(c)) return c;

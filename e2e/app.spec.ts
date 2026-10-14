@@ -75,6 +75,7 @@ test('asistente: interpretar, aclarar, confirmar y ver los registros en cada mó
   await expect(page.getByText(/Guardado: .*Leche/)).toBeVisible();
   await expect(page.getByText(/solo en este dispositivo/)).toBeVisible(); // estado de sincronización honesto
   await page.goto('./#/compras');
+  await page.locator('summary', { hasText: 'Supermercado' }).click();
   await expect(page.getByText('Leche', { exact: true })).toBeVisible();
   await page.goto('./#/economia');
   await expect(page.getByText('Luz', { exact: true })).toBeVisible();
@@ -92,7 +93,7 @@ test('asistente: cancelar no guarda nada', async ({ page }) => {
   const review = page.getByRole('dialog', { name: 'Revisar antes de guardar' });
   await review.getByRole('button', { name: 'Cancelar captura' }).click();
   await page.goto('./#/compras');
-  await expect(page.getByText('No hay productos pendientes en esta lista.')).toBeVisible();
+  await expect(page.getByText('No hay productos pendientes.')).toBeVisible();
   await page.goto('./#/asistente');
   await page.getByRole('tab', { name: 'Historial' }).click();
   await page.getByRole('tab', { name: 'Canceladas' }).click();
@@ -212,6 +213,7 @@ test('chicos: piden algo para el colegio y queda en la lista con su nombre', asy
   await dlg.getByLabel(/Para cuándo/).fill('el jueves');
   await dlg.getByRole('button', { name: 'Agregar a la lista' }).click();
   await page.goto('./#/compras');
+  await page.locator('summary', { hasText: 'Colegio' }).click();
   await expect(page.getByText('Cartulina verde')).toBeVisible();
   await expect(page.getByText('Pidió Hija')).toBeVisible();
 });

@@ -676,3 +676,16 @@ h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .stro
 dialog.sheet[open] { height: auto; }
 .sheet-body { flex: 1 1 auto; min-height: 0; -webkit-overflow-scrolling: touch; }
 .sheet-head, .sheet-foot { flex-shrink: 0; }
+/* Compras: rubros desplegables */
+details.rubro { margin-top: 10px; }
+details.rubro > summary { list-style: none; cursor: pointer; }
+details.rubro > summary::-webkit-details-marker { display: none; }
+.rubro-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+details.rubro[open] > .rubro-head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: none; background: var(--profile); color: var(--profile-on); }
+.rubro-ico { font-size: 1.35rem; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); flex-shrink: 0; }
+details.rubro[open] .rubro-ico { background: rgba(255, 255, 255, 0.6); }
+.rubro-name { flex: 1; font-weight: 700; font-size: 1.05rem; }
+.rubro-count { min-width: 26px; height: 26px; padding: 0 8px; border-radius: 13px; background: var(--profile-ink); color: #fff; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.rubro-chevron { transition: transform 0.2s ease; color: var(--text-2); }
+details.rubro[open] .rubro-chevron { transform: rotate(180deg); }
+details.rubro > .card { border-top-left-radius: 0; border-top-right-radius: 0; }

@@ -13,6 +13,9 @@ import { occurrencesBetween } from '../domain/recurrence';
 // ---------- Segmentación ----------
 const CLAUSE_STARTERS = '(hay que|tenemos que|tengo que|comprar|pagar|vence|llevar|traer|llamar|acordate|recorda|no olvidar|no te olvides|ademas|tambien hay|tambien)';
 
+/** Rubro de compras para un producto escrito a mano ("codo 110" → ferretería). */
+export function guessShopCategory(name: string): string { return pickCategory(fold(name), SHOP_CATEGORY, 'supermercado'); }
+
 export function segment(text: string): string[] {
   const lines = text.replace(/\r/g, '').split('\n');
   const out: string[] = [];

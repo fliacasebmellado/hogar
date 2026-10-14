@@ -62,6 +62,18 @@ describe('carpetas existentes de la familia', () => {
     expect(server.triggers.filter((t) => t.fn === 'onSheetEdit')).toHaveLength(5);
   });
 
+  it('lista los archivos de la carpeta de una inversión (p. ej. la planilla del plan de pagos) para abrirlos desde la app', async () => {
+    const local = server.drive.path('Inversiones', 'Local Centro')!;
+    local.createFile('Plan de pago', '', 'application/vnd.google-apps.spreadsheet');
+    local.folders.find((f) => f.name === 'Contratos')!.createFile('contrato.pdf', 'x', 'application/pdf');
+    const d = await device(server);
+    await d.engine.syncNow();
+    const inv = (await d.repo.list('investments')).find((i) => i.name === 'Local Centro')!;
+    const r = server.call('investmentFiles', { investmentId: inv.id }).result;
+    expect(r.files.map((f: any) => [f.name, f.path])).toEqual(expect.arrayContaining([['Plan de pago', ''], ['contrato.pdf', 'Contratos']]));
+    expect(r.files.find((f: any) => f.name === 'Plan de pago').mimeType).toBe('application/vnd.google-apps.spreadsheet');
+    expect(server.call('investmentFiles', { investmentId: 'no-existe' }).ok).toBe(false);
+  });
   it('cada subcarpeta de Inversiones es una inversión, con sus subcarpetas y una pestaña de resumen', async () => {
     const invs = server.tab('investments').data.slice(1).map((r) => r[sys]);
     expect(invs.sort()).toEqual(['Depto Palermo', 'Local Centro']);

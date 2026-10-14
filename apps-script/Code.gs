@@ -33,6 +33,7 @@ var ACTIONS = {
   setOption: function (req) { return setOption_(req); },
   ids: function () { return ids_(); },
   syncInvestments: function () { return syncInvestmentFolders_(); },
+  investmentFiles: function (req) { return investmentFiles_(req); },
 };
 
 function doPost(e) {

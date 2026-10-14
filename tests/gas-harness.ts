@@ -111,6 +111,7 @@ class FakeFile {
   getBlob() { return this.blob; }
   setDescription(d: string) { this.description = d; return this; }
   isTrashed() { return this.trashed; }
+  getLastUpdated() { return new Date('2026-10-01T12:00:00Z'); }
   setTrashed(t: boolean) { this.trashed = t; return this; }
   moveTo(f: FakeFolder) { this.parent.files = this.parent.files.filter((x) => x !== this); f.files.push(this); this.parent = f; return this; }
 }
@@ -125,6 +126,7 @@ class FakeFolder {
   getUrl() { return `https://drive.google.com/drive/folders/${this.id}`; }
   getFoldersByName(n: string) { return iter(this.folders.filter((f) => f.name === n)); }
   getFolders() { return iter(this.folders); }
+  getFiles() { return iter(this.files); }
   getFilesByName(n: string) { return iter(this.files.filter((f) => f.name === n)); }
   createFolder(n: string) { const f = this.drive.newFolder(n); this.folders.push(f); return f; }
   createFile(a: any, content?: string, mime?: string) {

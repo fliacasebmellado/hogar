@@ -25,6 +25,8 @@ export interface CalendarReport {
 }
 export interface ExternalEvent { googleEventId: string; title: string; location: string; description: string; allDay: boolean; start: string; end: string }
 
+export interface DriveFileInfo { id: string; name: string; mimeType: string; url: string; path: string; updatedAt: string }
+
 export const api = {
   ping: (t: Transport) => t.call<{ pong: boolean; schemaVersion: number; time: string }>('ping'),
   setup: (t: Transport) => t.call<{ spreadsheetUrl: string; rootFolderUrl: string; sheets: BackendStatus['sheets'] }>('setup'),
@@ -41,6 +43,7 @@ export const api = {
   gmailAttachment: (t: Transport, id: string, index: number) => t.call<{ name: string; mimeType: string; base64: string }>('gmailAttachment', { id, index }),
   formsPending: (t: Transport) => t.call<{ key: string; form: string; submittedAt: string; answers: Record<string, string> }[]>('formsPending'),
   formsAck: (t: Transport, keys: string[]) => t.call<{ acknowledged: number }>('formsAck', { keys }),
+  investmentFiles: (t: Transport, investmentId: string) => t.call<{ files: DriveFileInfo[]; folderUrl: string }>('investmentFiles', { investmentId }),
 };
 
 /** Importa SOLO los correos elegidos por la persona; cada uno se convierte en una captura para revisar. */

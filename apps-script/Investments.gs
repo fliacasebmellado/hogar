@@ -91,3 +91,36 @@ function rebuildInvestmentTabs_() {
     if (n.indexOf(SUMMARY_PREFIX) === 0 && !wanted[n]) { try { ss.deleteSheet(sh); } catch (e) { /* queda */ } }
   });
 }
+
+/**
+ * Archivos que hay en la carpeta de Drive de una inversión (y sus subcarpetas, hasta 2 niveles), para verlos y abrirlos
+ * desde la app: planillas (p. ej. un plan de pagos), documentos, PDF, fotos. Solo lectura del listado; no mueve ni borra.
+ */
+function investmentFiles_(req) {
+  var rec = new Table_('investments').get(String(req.investmentId || ''));
+  if (!rec || rec.deleted) throw new Error('Inversión inexistente.');
+  if (!rec.driveFolderId) return { files: [], folderUrl: '' };
+  var root = DriveApp.getFolderById(rec.driveFolderId);
+  var out = [];
+  var walk = function (folder, path, depth) {
+    var fi = folder.getFiles();
+    while (fi.hasNext() && out.length < 200) {
+      var f = fi.next();
+      if (f.isTrashed && f.isTrashed()) continue;
+      out.push({
+        id: f.getId(), name: f.getName(), mimeType: f.getMimeType(), url: f.getUrl(), path: path,
+        updatedAt: f.getLastUpdated ? new Date(f.getLastUpdated()).toISOString() : '',
+      });
+    }
+    if (depth >= 2) return;
+    var it = folder.getFolders();
+    while (it.hasNext()) {
+      var sub = it.next();
+      if (sub.isTrashed && sub.isTrashed()) continue;
+      walk(sub, path ? path + ' / ' + sub.getName() : sub.getName(), depth + 1);
+    }
+  };
+  walk(root, '', 0);
+  out.sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+  return { files: out, folderUrl: root.getUrl() };
+}

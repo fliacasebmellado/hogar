@@ -668,3 +668,6 @@ h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .stro
 .tile { background: var(--profile); color: var(--profile-on); }
 .tile-icon { color: var(--profile-ink); }
 .quick-round .circle, .quick-camera .circle { background: var(--profile); color: var(--profile-on); }
+/* Archivos de Drive de una inversión */
+.drive-files .item { flex-wrap: wrap; }
+.drive-embed { width: 100%; height: 70dvh; border: 0; border-radius: 14px; background: var(--surface-2); }

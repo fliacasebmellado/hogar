@@ -13,6 +13,7 @@ import { validateRecord } from '../../domain/validation';
 import { addDocument } from '../../services/documents';
 import { CONTRACT_FREQ, CONTRACT_KINDS, INVESTMENT_KINDS, INVESTMENT_STATUS, TAX_PRESETS, contractStatus, kindIcon, kindLabel, markTaxPaid, monthlyRent, nextPeriodDraft, summarize, taxStatus, type InvestmentSummary } from '../../services/investments';
 import { MODULE_COLOR, tones } from '../../ui/theme';
+import { DriveFiles } from './DriveFiles';
 
 const opts = (l: string[]) => l.map((x) => ({ value: x, label: x.charAt(0).toUpperCase() + x.slice(1) }));
 const CUR = opts(['ARS', 'USD']);
@@ -145,6 +146,7 @@ function InvestmentSheet({ open, inv, onClose, contracts, taxes, works }: { open
         {tab === 'datos' && (
           <div className="stack">
             {inv?.driveUrl && <a className="btn btn-sm" href={inv.driveUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> Abrir su carpeta en Drive</a>}
+            {inv && <DriveFiles inv={inv} onlySheets />}
             <RecordForm fields={INV_FIELDS} value={d} onChange={setD} errors={errs} />
           </div>
         )}
@@ -168,7 +170,7 @@ function InvestmentSheet({ open, inv, onClose, contracts, taxes, works }: { open
           <ChildList entity="investmentWorks" fields={WORK_FIELDS} items={own(works)} investmentId={inv.id} draft={{ currency: 'ARS', status: 'pendiente', date: today() }}
             title={(w) => w.title} sub={(w) => [w.date && formatDate(w.date, { year: true }), w.provider, w.cost != null && formatMoney(w.cost, w.currency), w.paidBy && `pagó ${w.paidBy}`].filter(Boolean).join(' · ')} status={(w) => w.status} />
         )}
-        {inv && tab === 'documentos' && <InvestmentDocs inv={inv} />}
+        {inv && tab === 'documentos' && <div className="stack"><InvestmentDocs inv={inv} /><DriveFiles inv={inv} /></div>}
       </Sheet>
       <ConfirmSheet open={del} onClose={() => setDel(false)} title="Eliminar inversión" danger confirmLabel="Eliminar"
         message={<p>Se marca como eliminada en la app y en la planilla. Su carpeta en Drive y los archivos <strong>no</strong> se borran.</p>}

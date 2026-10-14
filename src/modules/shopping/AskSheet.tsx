@@ -8,7 +8,8 @@ import { ValidationError } from '../../domain/validation';
 
 const KINDS = [
   { id: 'colegio', label: '✏️ Para el colegio' },
-  { id: 'ropa', label: '👟 Ropa' },
+  { id: 'libreria', label: '📚 Librería' },
+  { id: 'ropa', label: '👟 Ropa / calzado' },
   { id: 'farmacia', label: '💊 Farmacia' },
   { id: 'supermercado', label: '🛒 Comida' },
   { id: 'otras', label: '📦 Otra cosa' },

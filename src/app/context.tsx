@@ -96,7 +96,7 @@ export function AppProvider({ repo, children }: { repo: Repo; children: ReactNod
   const notifSettings = notificationSettingsFrom(configRows);
   // El color del perfil activo tiñe encabezado, botones de acción y selección.
   useEffect(() => {
-    const raw = profile?.color ?? '#877b5f';
+    const raw = profile?.color ?? '#c3bdaf';
     const t = tones(raw);
     const st = document.documentElement.style;
     st.setProperty('--profile-raw', raw);

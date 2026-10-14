@@ -249,7 +249,7 @@ describe('Perfiles y permisos', () => {
   });
   it('perfil Familia: ve lo de todos junto, pero no economía ni administración', async () => {
     const fam = (await repo.get('profiles', 'profile-familia'))!;
-    expect(fam).toMatchObject({ role: 'family', color: '#877b5f' });
+    expect(fam).toMatchObject({ role: 'family', color: '#c3bdaf' });
     expect(can(fam, 'finance.view')).toBe(false);
     expect(canOpenModule(fam, 'economia')).toBe(false);
     expect(canOpenModule(fam, 'compras')).toBe(true);
@@ -354,7 +354,7 @@ describe('paleta de perfiles', () => {
     await r.create('profiles', { id: 'profile-y', name: 'Y', role: 'child', color: '#123456', avatar: 'Y', active: true, aliases: [], prefs: {} });
     await r.db.setKV('seeded', true); await r.db.setKV('seedVersion', 2);
     await ensureSeed(r);
-    expect((await r.get('profiles', 'profile-x'))!.color).toBe('#55355b');
+    expect((await r.get('profiles', 'profile-x'))!.color).toBe('#aa9aad');
     expect((await r.get('profiles', 'profile-y'))!.color).toBe('#123456');
   });
 });

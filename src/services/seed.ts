@@ -13,14 +13,14 @@ const DEFAULT_HOME_BLOCKS = ['agenda', 'tareas', 'pagos', 'compras', 'casa', 're
 
 // Perfiles iniciales GENÉRICOS (el código es público). Los nombres reales se cargan en la app y viajan por la planilla:
 // un dispositivo nuevo los recibe al conectarse y descarta estos genéricos (ver SyncEngine.dropSeedPlaceholders).
-// Paleta elegida por la familia (color pleno; en pantalla se ve al 50 %).
+// Paleta elegida por la familia (en pantalla se ve al 75 %).
 export const FAMILY_PROFILE_ID = 'profile-familia';
 const INITIAL_PROFILES: Partial<Profile>[] = [
-  { id: 'profile-papa', name: 'Papá', role: 'adult', color: '#73859f', avatar: 'P', aliases: ['papa'] },
-  { id: 'profile-mama', name: 'Mamá', role: 'adult', color: '#55355b', avatar: 'M', aliases: ['mama'] },
-  { id: 'profile-hijo', name: 'Hijo', role: 'child', color: '#839579', avatar: 'H', aliases: [] },
-  { id: 'profile-hija', name: 'Hija', role: 'child', color: '#a58f99', avatar: 'H', aliases: [] },
-  { id: FAMILY_PROFILE_ID, name: 'Familia', role: 'family', color: '#877b5f', avatar: '👪', aliases: ['todos', 'toda la familia'] },
+  { id: 'profile-papa', name: 'Papá', role: 'adult', color: '#b9c2cf', avatar: 'P', aliases: ['papa'] },
+  { id: 'profile-mama', name: 'Mamá', role: 'adult', color: '#aa9aad', avatar: 'M', aliases: ['mama'] },
+  { id: 'profile-hijo', name: 'Hijo', role: 'child', color: '#c1cabc', avatar: 'H', aliases: [] },
+  { id: 'profile-hija', name: 'Hija', role: 'child', color: '#d2c7cc', avatar: 'H', aliases: [] },
+  { id: FAMILY_PROFILE_ID, name: 'Familia', role: 'family', color: '#c3bdaf', avatar: '👪', aliases: ['todos', 'toda la familia'] },
 ];
 
 async function createMissing(repo: Repo, only?: string[]) {
@@ -51,8 +51,8 @@ export async function ensureSeed(repo: Repo): Promise<boolean> {
   return true;
 }
 
-/** Paleta anterior → paleta nueva. Solo se cambia un color que siga siendo el de fábrica (si alguien eligió otro, se respeta). */
-const PALETTE_V3: Record<string, string> = { '#626b71': '#73859f', '#b1afb6': '#55355b', '#8c8e84': '#839579', '#c4b9c0': '#a58f99', '#c2bbb4': '#877b5f' };
+/** Paletas anteriores (v2 y la primera versión de v3) → paleta actual de la familia. Solo se cambia un color que siga siendo el de fábrica (si alguien eligió otro, se respeta). */
+const PALETTE_V3: Record<string, string> = { '#626b71': '#b9c2cf', '#8c8e84': '#c1cabc', '#c4b9c0': '#d2c7cc', '#b1afb6': '#aa9aad', '#c2bbb4': '#c3bdaf', '#73859f': '#b9c2cf', '#839579': '#c1cabc', '#a58f99': '#d2c7cc', '#55355b': '#aa9aad', '#877b5f': '#c3bdaf' };
 
 /** Actualizaciones: v2 agrega el perfil Familia si falta; v3 aplica la paleta nueva (se revisa en cada inicio porque los
  * perfiles pueden llegar después desde la planilla con el color viejo). */

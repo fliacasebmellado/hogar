@@ -26,7 +26,7 @@ export interface Tone { base: string; tint: string; soft: string; ink: string; o
 export function tones(hex: string): Tone {
   let ink = hex;
   for (let i = 0; i < 12 && contrast(ink, '#ffffff') < 4.5; i++) ink = mix(ink, '#1c1917', 0.18);
-  const base = mix(hex, '#ffffff', 0.5); // la paleta se usa al 50 % de transparencia
+  const base = mix(hex, '#ffffff', 0.25); // la paleta se usa al 75 % (25 % de transparencia)
   return { base, tint: mix(hex, '#ffffff', 0.86), soft: mix(hex, '#ffffff', 0.68), ink, on: onColor(base) };
 }
 
@@ -44,7 +44,7 @@ const TASK_ICON: Record<string, string> = {
   limpieza: '🧽', ropa: '👕', cocina: '🍳', orden: '🧺', patio: '🌿', pileta: '🏊', mantenimiento: '🔧', tramites: '🗂️', familia: '🏡', otras: '✅',
 };
 const SHOP_ICON: Record<string, string> = {
-  supermercado: '🛒', limpieza: '🧴', higiene: '🪥', ferreteria: '🔩', farmacia: '💊', colegio: '✏️', ropa: '👟', otras: '📦',
+  supermercado: '🛒', limpieza: '🧴', higiene: '🪥', ferreteria: '🔩', farmacia: '💊', colegio: '🎒', libreria: '✏️', ropa: '👟', otras: '📦',
 };
 export const categoryIcon = (kind: 'events' | 'tasks' | 'shopping', id?: string) =>
   ({ events: EVENT_ICON, tasks: TASK_ICON, shopping: SHOP_ICON }[kind][id ?? ''] ?? { events: '📌', tasks: '✅', shopping: '📦' }[kind]);

@@ -26,8 +26,8 @@ export const DEFAULT_CATEGORIES: Record<CategoryModule, Category[]> = {
   ],
   shopping: [
     c('supermercado', 'Supermercado', SOFT.green), c('limpieza', 'Limpieza', SOFT.sky), c('higiene', 'Higiene', SOFT.teal),
-    c('ferreteria', 'Ferretería', SOFT.amber), c('farmacia', 'Farmacia', SOFT.rose), c('colegio', 'Colegio', SOFT.blue),
-    c('ropa', 'Ropa', SOFT.violet), c('otras', 'Otras', SOFT.gray),
+    c('farmacia', 'Farmacia', SOFT.rose), c('ferreteria', 'Ferretería / corralón', SOFT.amber), c('ropa', 'Ropa / calzado', SOFT.violet),
+    c('libreria', 'Librería', SOFT.blue), c('colegio', 'Colegio', SOFT.blue), c('otras', 'Otros', SOFT.gray),
   ],
   payments: [
     c('servicios', 'Servicios', SOFT.sky), c('impuestos', 'Impuestos', SOFT.amber), c('vivienda', 'Vivienda', SOFT.stone),
@@ -73,8 +73,8 @@ export const CURRENCIES = ['ARS', 'USD', 'EUR'];
 export const UNITS = ['u', 'kg', 'g', 'l', 'ml', 'paq', 'caja', 'docena'];
 export const PAYMENT_METHODS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Débito automático', 'Billetera virtual', 'Otro'];
 
-// Paleta de la familia (color pleno; en pantalla se ve al 50 %): azul, verde, rosado, violeta, arena y extras suaves.
-export const PROFILE_COLORS = ['#73859f', '#839579', '#a58f99', '#55355b', '#877b5f', '#9fb1c2', '#c9b79c', '#a7b8a8'];
+// Paleta de la familia (en pantalla se ve al 75 %): azul, verde, rosado, violeta, arena y extras suaves.
+export const PROFILE_COLORS = ['#b9c2cf', '#c1cabc', '#d2c7cc', '#aa9aad', '#c3bdaf', '#9fb1c2', '#c9b79c', '#a7b8a8'];
 
 export const ENTITY_LABEL: Record<string, string> = {
   tasks: 'Tarea', events: 'Evento', shoppingItems: 'Compra', shoppingLists: 'Lista', payments: 'Pago', expenses: 'Gasto',

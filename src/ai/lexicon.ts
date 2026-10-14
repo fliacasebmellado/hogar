@@ -110,10 +110,10 @@ export const MAINT_CATEGORY: [RegExp, string][] = [
 export const SHOP_CATEGORY: [RegExp, string][] = [
   [/\b(lavandina|detergente|jabon en polvo|jabon liquido para ropa|suavizante|esponja|trapo|rejilla|bolsas de residuo|bolsas de basura|desengrasante|limpiador|cif|mr musculo|virulana|escoba|secador|lustramuebles|insecticida)\b/, 'limpieza'],
   [/\b(shampoo|champu|acondicionador|pasta dental|dentifrico|cepillo de dientes|desodorante|papel higienico|toallitas|panales|algodon|jabon|crema|maquinita|toallas femeninas|hilo dental)\b/, 'higiene'],
-  [/\b(tornillo|tornillos|clavos|lamparita|lamparitas|cinta|pintura|pegamento|pilas|pila|enchufe|zapatilla electrica|cable|cuerito|tarugos|lija|silicona)\b/, 'ferreteria'],
+  [/\b(tornillo|tornillos|clavos|lamparita|lamparitas|cinta|pintura|pegamento|pilas|pila|enchufe|zapatilla electrica|cable|cuerito|tarugos|lija|silicona|cemento|arena|ladrillos?|membrana|ceramicos?|pastina|griferia|durlock)\b/, 'ferreteria'],
   [/\b(ibuprofeno|paracetamol|curitas|alcohol|remedio|remedios|aspirina|termometro|gasas|antitermico|jarabe|vitaminas|repelente|protector solar)\b/, 'farmacia'],
-  [/\b(cuaderno|cuadernos|lapiz|lapices|birome|biromes|carpeta|plasticola|goma|regla|mochila|cartuchera|fotocopias|hojas|tijera|marcadores|crayones|repuesto|utiles|resaltador|cartulina)\b/, 'colegio'],
-  [/\b(medias|remera|zapatillas|pantalon|buzo|guardapolvo|campera|calzoncillos|bombacha|jogging|ojotas)\b/, 'ropa'],
+  [/\b(cuaderno|cuadernos|lapiz|lapices|birome|biromes|carpeta|plasticola|goma|regla|mochila|cartuchera|fotocopias|hojas|tijera|marcadores|crayones|repuesto|utiles|resaltador|cartulina|libro|libros|sobres|papel glase|fibras)\b/, 'libreria'],
+  [/\b(medias|remera|zapatillas|pantalon|buzo|guardapolvo|campera|calzoncillos|bombacha|jogging|ojotas|zapatos|botas|botines|sandalias|pantuflas|calzado)\b/, 'ropa'],
 ];
 
 export const STOP_FILLERS = /\b(hay que|tenemos que|tengo que|tiene que|tienen que|acordate de|acordarse de|acordate|recordar|recordame|recorda|no olvidar|no te olvides de|no te olvides|no se olviden de|por favor|porfa|che|ojo que|ojo|tambien|ademas|despues|luego)\b/g;

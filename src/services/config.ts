@@ -19,7 +19,10 @@ export async function setConfig(repo: Repo, key: string, value: any, by?: ID): P
 
 export function categoriesFrom(configRows: ConfigEntry[] | undefined, mod: CategoryModule): Category[] {
   const row = configRows?.find((r) => r.key === `categories.${mod}` && !r.deleted);
-  return (row?.value as Category[]) ?? DEFAULT_CATEGORIES[mod];
+  if (!row) return DEFAULT_CATEGORIES[mod];
+  // Si la familia personalizó las categorías, igual se suman las nuevas que trae la app (sin pisar las suyas).
+  const own = row.value as Category[];
+  return [...own, ...DEFAULT_CATEGORIES[mod].filter((d) => !own.some((c) => c.id === d.id))];
 }
 export function permissionsFrom(configRows: ConfigEntry[] | undefined): PermissionMatrix {
   const row = configRows?.find((r) => r.key === 'permissions' && !r.deleted);

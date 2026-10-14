@@ -8,7 +8,7 @@ import { isPhotoAvatar } from '../services/avatarPhoto';
 
 export function Avatar({ profile, size, large }: { profile?: Pick<Profile, 'name' | 'color' | 'avatar'>; size?: number; large?: boolean }) {
   if (!profile) return <span className="avatar" style={{ background: 'var(--surface-3)' }} aria-hidden="true">?</span>;
-  const bg = mix(profile.color, '#ffffff', 0.5); // paleta al 50 %
+  const bg = mix(profile.color, '#ffffff', 0.25); // paleta al 75 %
   const style: React.CSSProperties = { background: bg, color: onColor(bg) };
   if (size) Object.assign(style, { width: size, height: size, fontSize: size * 0.45, borderWidth: 0 });
   return <span className={`avatar${large ? ' avatar-lg' : ''}${isPhotoAvatar(profile.avatar) ? ' has-photo' : ''}`} style={style} aria-hidden="true">

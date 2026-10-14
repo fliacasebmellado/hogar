@@ -150,7 +150,7 @@ export default function Shopping() {
 
 function guessCat(name: string, valid: string[]): string {
   const n = norm(name);
-  const map: [RegExp, string][] = [[/lavandina|detergente|esponja|trapo|suavizante|jabon en polvo|bolsas/, 'limpieza'], [/shampoo|pasta dental|desodorante|papel higienico|panal|toallita|jabon/, 'higiene'], [/ibuprofeno|paracetamol|curita|remedio|alcohol/, 'farmacia'], [/tornillo|lamparita|pila|cinta|pintura/, 'ferreteria'], [/cuaderno|lapiz|birome|carpeta|plasticola|utiles/, 'colegio'], [/medias|remera|zapatilla|pantalon|buzo/, 'ropa']];
+  const map: [RegExp, string][] = [[/lavandina|detergente|esponja|trapo|suavizante|jabon en polvo|bolsas/, 'limpieza'], [/shampoo|pasta dental|desodorante|papel higienico|panal|toallita|jabon/, 'higiene'], [/ibuprofeno|paracetamol|curita|remedio|alcohol/, 'farmacia'], [/tornillo|lamparita|pila|cinta|pintura/, 'ferreteria'], [/cuaderno|lapiz|birome|carpeta|plasticola|utiles|cartulina|libro|fibras/, 'libreria'], [/cemento|arena|ladrillo|membrana|ceramico/, 'ferreteria'], [/zapato|bota|sandalia|ojota/, 'ropa'], [/medias|remera|zapatilla|pantalon|buzo/, 'ropa']];
   for (const [re, c] of map) if (re.test(n) && valid.includes(c)) return c;
   return valid.includes('supermercado') ? 'supermercado' : valid[0];
 }

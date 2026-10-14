@@ -442,9 +442,9 @@ table.simple th { color: var(--text-3); font-weight: 600; font-size: 0.76rem; }
 :root {
   --bg: #f4f4f6; --surface: #ffffff; --surface-2: #f4f4f6; --surface-3: #ececf0; --border: #ececf0; --border-strong: #dcdce2;
   --text: #1f1d2b; --text-2: #4a4858; --text-3: #8b8a97;
-  --profile-raw: #877b5f;
+  --profile-raw: #c3bdaf;
   /* la paleta del perfil al 50 % de transparencia sobre el fondo (opaca para que el contenido no se vea detrás) */
-  --band: color-mix(in srgb, var(--profile-raw) 50%, var(--bg));
+  --band: color-mix(in srgb, var(--profile-raw) 75%, var(--bg));
   --accent: var(--profile-ink); --accent-text: #ffffff;
   --shadow: 0 6px 24px rgba(31, 29, 43, 0.06), 0 1px 2px rgba(31, 29, 43, 0.04);
   --shadow-lg: 0 18px 48px rgba(31, 29, 43, 0.16);
@@ -671,3 +671,8 @@ h1, h2, h3, .item-title, .tile-label, .ev-title, .hero .hello, .gate-name, .stro
 /* Archivos de Drive de una inversión */
 .drive-files .item { flex-wrap: wrap; }
 .drive-embed { width: 100%; height: 70dvh; border: 0; border-radius: 14px; background: var(--surface-2); }
+/* iPhone/Safari: con "flex: 1" el cuerpo de la hoja se encogía a 0 (solo se veía el título). El cuerpo toma su alto
+   natural y hace scroll dentro del máximo de la hoja. */
+dialog.sheet[open] { height: auto; }
+.sheet-body { flex: 1 1 auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+.sheet-head, .sheet-foot { flex-shrink: 0; }

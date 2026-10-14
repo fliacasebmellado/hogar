@@ -2,7 +2,7 @@
 
 export type CategoryModule = 'events' | 'tasks' | 'shopping' | 'payments' | 'expenses' | 'documents' | 'assets' | 'maintenance';
 
-export interface Category { id: string; label: string; color: string }
+export interface Category { id: string; label: string; color: string; icon?: string; keywords?: string[]; custom?: boolean }
 
 const c = (id: string, label: string, color: string): Category => ({ id, label, color });
 

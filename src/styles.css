@@ -689,3 +689,11 @@ details.rubro[open] .rubro-ico { background: rgba(255, 255, 255, 0.6); }
 .rubro-chevron { transition: transform 0.2s ease; color: var(--text-2); }
 details.rubro[open] .rubro-chevron { transform: rotate(180deg); }
 details.rubro > .card { border-top-left-radius: 0; border-top-right-radius: 0; }
+/* Rubros propios: vista previa, grilla de íconos y "Agregar en …" dentro de cada rubro */
+.rubro-preview { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius); background: var(--profile); color: var(--profile-on); }
+.rubro-preview .rubro-ico { background: rgba(255, 255, 255, 0.6); }
+.icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; margin-bottom: 8px; }
+.icon-grid button { height: 44px; border-radius: 12px; border: 0; background: var(--surface-2); font-size: 1.35rem; cursor: pointer; }
+.icon-grid button[aria-pressed='true'] { background: var(--profile); box-shadow: inset 0 0 0 2px var(--profile-ink); }
+.rubro-add { cursor: default; gap: 10px; }
+.rubro-add .input { min-height: 42px; box-shadow: none; background: var(--surface-2); }

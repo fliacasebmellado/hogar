@@ -14,6 +14,9 @@ import { norm } from '../../services/tasks';
 import { AskSheet } from './AskSheet';
 import { guessShopCategory } from '../../ai/rules';
 import { cleanItemName, tidyShopping } from '../../services/shopping';
+import { RubrosSheet, rubroIcon } from './RubrosSheet';
+import { Pencil } from 'lucide-react';
+import type { Category } from '../../domain/catalog';
 import { ChevronDown } from 'lucide-react';
 import { categoryIcon, tones } from '../../ui/theme';
 
@@ -37,6 +40,8 @@ export default function Shopping() {
   const [listSheet, setListSheet] = useState<'new' | 'templates' | 'rename' | null>(null);
   const [showBought, setShowBought] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
+  const [rubroSheet, setRubroSheet] = useState<Category | null | undefined>(undefined); // undefined = cerrado, null = nuevo
+  const [inlineName, setInlineName] = useState<Record<string, string>>({});
   useEffect(() => { const l = params.get('lista'); if (l) setListId(l); }, [params]);
   // Rubros desplegables: se recuerda cuáles quedaron abiertos en este dispositivo.
   const [open, setOpen] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('compras-abiertos') ?? '[]'); } catch { return []; } });
@@ -50,18 +55,20 @@ export default function Shopping() {
   const pending = inList.filter((i) => i.status === 'pendiente' && (!q || norm(i.name).includes(norm(q))));
   const bought = inList.filter((i) => i.status === 'comprado').sort((a, b) => ((b.purchasedAt ?? '') > (a.purchasedAt ?? '') ? 1 : -1));
   const cats = categories('shopping');
-  const grouped = useMemo(() => cats.map((c) => ({ c, items: pending.filter((i) => i.category === c.id) })).concat([{ c: { id: '_', label: 'Otras', color: '' }, items: pending.filter((i) => !cats.some((c) => c.id === i.category)) }]).filter((g) => g.items.length), [pending, cats]);
+  const grouped = useMemo(() => cats.map((c) => ({ c, items: pending.filter((i) => i.category === c.id) })).concat([{ c: { id: '_', label: 'Otras', color: '' }, items: pending.filter((i) => !cats.some((c) => c.id === i.category)) }]).filter((g) => g.items.length || (g.c.custom && !q)), [pending, cats, q]);
+  const counts = useMemo(() => Object.fromEntries(cats.map((c) => [c.id, inList.filter((i) => i.status === 'pendiente' && i.category === c.id).length])), [inList, cats]);
   const dupGroups = useMemo(() => {
     const m: Record<string, ShoppingItem[]> = {};
     for (const i of inList.filter((x) => x.status === 'pendiente')) (m[productKey(i.name)] ??= []).push(i);
     return Object.values(m).filter((g) => g.length > 1);
   }, [inList]);
 
-  const add = async (allowDuplicate = false, forced?: string) => {
+  const add = async (allowDuplicate = false, forced?: string, inCategory?: string) => {
     const n = cleanItemName(forced ?? name);
     if (!n || !list) return;
-    const r = await run(() => addItem(repo, { listId: list.id, name: n, category: guessCat(n, cats.map((c) => c.id)), requestedBy: profile?.role === 'child' ? profile.id : undefined }, { by: profile?.id, allowDuplicate }));
-    if (r?.duplicate) toast(`"${r.duplicate.name}" ya está en la lista.`, { action: { label: 'Agregar igual', run: () => add(true, n) } });
+    const r = await run(() => addItem(repo, { listId: list.id, name: n, category: inCategory ?? guessCat(n, cats), requestedBy: profile?.role === 'child' ? profile.id : undefined }, { by: profile?.id, allowDuplicate }));
+    if (inCategory && r?.item) setInlineName((m) => ({ ...m, [inCategory]: '' }));
+    if (r?.duplicate) toast(`"${r.duplicate.name}" ya está en la lista.`, { action: { label: 'Agregar igual', run: () => add(true, n, inCategory) } });
     else if (r?.item) { setName(''); setOpenCat(r.item.category ?? 'supermercado', true); toast(`${r.item.name} → ${cats.find((c) => c.id === r.item!.category)?.label ?? 'Otros'}`, { tone: 'ok' }); }
   };
 
@@ -77,7 +84,8 @@ export default function Shopping() {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 10, justifyContent: 'flex-end' }}>
+      <div className="row" style={{ marginBottom: 10, justifyContent: 'flex-end', gap: 8 }}>
+        {profile?.role !== 'child' && <button className="btn btn-sm" onClick={() => setRubroSheet(null)}><Plus size={16} /> Rubro</button>}
         <button className="btn btn-sm" onClick={() => setListSheet('templates')}><Copy size={16} /> Habituales</button>
       </div>
       {profile?.role === 'child' && (
@@ -101,7 +109,7 @@ export default function Shopping() {
       {grouped.map((g) => (
         <details key={g.c.id} className="rubro" open={open.includes(g.c.id) || !!q} onToggle={(e) => { if (!q) setOpenCat(g.c.id, (e.currentTarget as HTMLDetailsElement).open); }}>
           <summary className="rubro-head">
-            <span className="rubro-ico" aria-hidden="true">{categoryIcon('shopping', g.c.id)}</span>
+            <span className="rubro-ico" aria-hidden="true">{g.c.id === '_' ? categoryIcon('shopping', 'otras') : rubroIcon(g.c)}</span>
             <span className="rubro-name">{g.c.label}</span>
             <span className="rubro-count">{g.items.length}</span>
             <ChevronDown className="rubro-chevron" size={20} aria-hidden="true" />
@@ -124,6 +132,15 @@ export default function Shopping() {
                 </div>
               </li>
             ))}
+            {g.c.id !== '_' && (
+              <li>
+                <form className="item rubro-add" onSubmit={(e) => { e.preventDefault(); add(false, inlineName[g.c.id] ?? '', g.c.id); }}>
+                  <Plus size={18} className="muted" aria-hidden="true" />
+                  <input className="input" value={inlineName[g.c.id] ?? ''} onChange={(e) => setInlineName((m) => ({ ...m, [g.c.id]: e.target.value }))} placeholder={`Agregar en ${g.c.label}`} aria-label={`Agregar en ${g.c.label}`} />
+                  {profile?.role !== 'child' && <button type="button" className="icon-btn" onClick={() => setRubroSheet(g.c)} aria-label={`Editar rubro ${g.c.label}`}><Pencil size={16} /></button>}
+                </form>
+              </li>
+            )}
           </ul></div>
         </details>
       ))}
@@ -151,6 +168,7 @@ export default function Shopping() {
         </section>
       )}
       <AskSheet open={askOpen} onClose={() => setAskOpen(false)} />
+      <RubrosSheet open={rubroSheet !== undefined} editing={rubroSheet ?? null} onClose={() => setRubroSheet(undefined)} counts={counts} />
       <ItemSheet item={editing} onClose={() => setEditing(null)} lists={active} siblings={inList} />
       <PurchaseSheet items={purchaseFor} onClose={() => setPurchaseFor(null)} />
       <ListSheet mode={listSheet} onClose={() => setListSheet(null)} list={list} templates={templates} onCreated={(id) => setListId(id)} />
@@ -158,7 +176,12 @@ export default function Shopping() {
   );
 }
 
-function guessCat(name: string, valid: string[]): string {
+function guessCat(name: string, cats: Category[]): string {
+  const valid = cats.map((c) => c.id);
+  // Primero los rubros propios: por sus palabras clave o por su nombre ("alimento para perro" → Mascotas si tiene "perro").
+  const f = norm(name);
+  const own = cats.find((c) => c.custom && [...(c.keywords ?? []), c.label].some((k) => { const w = norm(k); return w.length > 2 && f.includes(w); }));
+  if (own) return own.id;
   const g = guessShopCategory(name);
   if (g !== 'supermercado' && valid.includes(g)) return g;
   const n = norm(name);

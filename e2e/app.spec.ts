@@ -300,3 +300,21 @@ test('botones Escribir y Voz de Inicio: sin opciones de audio al escribir; la vo
   // En Chromium de pruebas no hay reconocimiento de voz: se muestra la alternativa o el micrófono
   await expect(page.getByText(/no permite dictar por voz|Te escucho|Tocá el micrófono|Listo/).first()).toBeVisible();
 });
+
+test('compras: agregar un rubro propio con ícono y cargar productos en él', async ({ page }) => {
+  await enter(page, 'Mamá');
+  await page.goto('./#/compras');
+  await page.getByRole('button', { name: /Rubro/ }).click();
+  const d = page.getByRole('dialog');
+  await d.getByLabel('Nombre').fill('Mascotas');
+  await d.getByRole('button', { name: 'Ícono 🐶' }).click();
+  await d.getByLabel(/Palabras para reconocerlo/).fill('perro, piedras');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('summary', { hasText: 'Mascotas' })).toBeVisible();
+  await page.getByLabel('Agregar producto').fill('Alimento para perro');
+  await page.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await expect(page.locator('details.rubro', { hasText: 'Mascotas' }).getByText('Alimento para perro')).toBeVisible();
+  await page.getByLabel('Agregar en Mascotas').fill('Collar');
+  await page.getByLabel('Agregar en Mascotas').press('Enter');
+  await expect(page.locator('details.rubro', { hasText: 'Mascotas' }).getByText('Collar')).toBeVisible();
+});

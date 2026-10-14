@@ -8,7 +8,7 @@ import {
 import { useApp, useLive } from './context';
 import { Avatar } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
-import { canOpenModule, hashPin, type ModuleKey } from '../domain/permissions';
+import { canOpenModule, pinHoldersFor, pinMatches, type ModuleKey } from '../domain/permissions';
 import type { Profile } from '../domain/types';
 import { buildNotifications } from '../services/notifications';
 import { MODULE_COLOR, tones, type ModuleId } from '../ui/theme';
@@ -181,22 +181,24 @@ function ProfileGate({ profiles }: { profiles: Profile[] }) {
 }
 
 function ProfileList({ profiles, onDone }: { profiles: Profile[]; onDone?: () => void }) {
-  const { setProfileId, toast, profile: current } = useApp();
+  const { setProfileId, toast, profile: current, profiles: all } = useApp();
   const [pinFor, setPinFor] = useState<Profile | null>(null);
   const [pin, setPin] = useState('');
+  const [holders, setHolders] = useState<Profile[]>([]);
   const choose = (p: Profile) => {
-    if (p.pinHash && p.id !== current?.id) { setPinFor(p); setPin(''); return; }
+    const h = pinHoldersFor(current, p, all);
+    if (h.length) { setPinFor(p); setHolders(h); setPin(''); return; }
     setProfileId(p.id); onDone?.();
   };
   const verify = async () => {
     if (!pinFor) return;
-    if ((await hashPin(pin, pinFor.id)) === pinFor.pinHash) { setProfileId(pinFor.id); setPinFor(null); onDone?.(); }
+    if (await pinMatches(pin, holders)) { setProfileId(pinFor.id); setPinFor(null); onDone?.(); }
     else toast('PIN incorrecto.', { tone: 'error' });
   };
   if (pinFor) {
     return (
       <form className="form" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-        <p>Ingresá el PIN de {pinFor.name}.</p>
+        <p>{holders.length === 1 && holders[0].id === pinFor.id ? `Ingresá el PIN de ${pinFor.name}.` : `Para entrar a ${pinFor.name} hace falta el PIN de un adulto (${holders.map((h) => h.name).join(' o ')}).`}</p>
         <input className="input" type="password" inputMode="numeric" autoFocus value={pin} onChange={(e) => setPin(e.target.value)} aria-label="PIN" />
         <div className="row"><button type="button" className="btn" onClick={() => setPinFor(null)}>Volver</button><button className="btn btn-primary">Entrar</button></div>
       </form>
@@ -223,7 +225,7 @@ function ProfilePicker({ open, onClose }: { open: boolean; onClose: () => void }
     <Sheet open={open} onClose={onClose} title="Cambiar de perfil">
       <ProfileList profiles={profiles} onDone={onClose} />
       <p className="muted small" style={{ marginTop: 12 }}>
-        El selector de perfil organiza la información; no es una barrera de seguridad. Cualquiera con este dispositivo puede cambiar de perfil (el PIN solo disuade).
+        Los adultos pasan de un perfil a otro libremente. Desde el perfil de un chico, salir pide el PIN de un adulto (se carga en Familia → Editar). Es para ordenar y disuadir, no una barrera de seguridad.
       </p>
     </Sheet>
   );
@@ -231,16 +233,18 @@ function ProfilePicker({ open, onClose }: { open: boolean; onClose: () => void }
 
 /** PIN pedido desde cualquier lugar (por ejemplo, la fila de perfiles de Inicio). */
 function PinSheet() {
-  const { pinRequest, clearPinRequest, setProfileId, toast } = useApp();
+  const { pinRequest, clearPinRequest, setProfileId, toast, profile, profiles } = useApp();
   const [pin, setPin] = useState('');
+  const holders = pinRequest ? pinHoldersFor(profile, pinRequest, profiles) : [];
   const verify = async () => {
     if (!pinRequest) return;
-    if ((await hashPin(pin, pinRequest.id)) === pinRequest.pinHash) { setProfileId(pinRequest.id); setPin(''); clearPinRequest(); }
+    if (await pinMatches(pin, holders)) { setProfileId(pinRequest.id); setPin(''); clearPinRequest(); }
     else toast('PIN incorrecto.', { tone: 'error' });
   };
   return (
-    <Sheet open={!!pinRequest} onClose={() => { setPin(''); clearPinRequest(); }} title={`PIN de ${pinRequest?.name ?? ''}`}>
+    <Sheet open={!!pinRequest} onClose={() => { setPin(''); clearPinRequest(); }} title={`Entrar a ${pinRequest?.name ?? ''}`}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); verify(); }}>
+        <p className="muted">{holders.length === 1 && holders[0].id === pinRequest?.id ? `Ingresá el PIN de ${pinRequest?.name}.` : `Hace falta el PIN de un adulto (${holders.map((h) => h.name).join(' o ')}).`}</p>
         <input className="input" type="password" inputMode="numeric" autoFocus value={pin} onChange={(e) => setPin(e.target.value)} aria-label="PIN" />
         <button className="btn btn-primary">Entrar</button>
       </form>

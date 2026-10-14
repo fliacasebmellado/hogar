@@ -165,7 +165,7 @@ function ProfileSheet({ open, profile: target, onClose }: { open: boolean; profi
         </div>
         {(d.role === 'adult') && (
           <>
-            <TextField label={d.pinHash ? 'Cambiar PIN (opcional)' : 'PIN para entrar a este perfil (opcional)'} type="password" inputMode="numeric" value={pin} onChange={setPin} hint="Disuade a los chicos de entrar a un perfil adulto. No es una contraseña segura." />
+            <TextField label={d.pinHash ? 'Cambiar PIN (opcional)' : 'PIN para entrar a este perfil (opcional)'} type="password" inputMode="numeric" value={pin} onChange={setPin} hint={d.role === 'adult' ? 'Con el PIN de un adulto, los chicos no pueden salir de su perfil (ni entrar al de otro). Los adultos se mueven libremente. No es una contraseña segura.' : 'Opcional. Los chicos igual necesitan el PIN de un adulto para salir de su perfil.'} />
             {d.pinHash && <button type="button" className="btn btn-sm" onClick={() => setD({ ...d, pinHash: undefined })}>Quitar PIN</button>}
           </>
         )}

@@ -61,3 +61,29 @@ export async function hashPin(pin: string, salt: string): Promise<string> {
   const d = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * Quién puede autorizar un cambio de perfil (lista vacía = no hace falta PIN):
+ * - Desde un adulto o desde Familia se pasa a cualquier perfil sin PIN (los adultos van y vienen).
+ * - Desde un chico, salir de su perfil (a un adulto, a Familia o al de un hermano) pide el PIN de un adulto.
+ * - En la pantalla inicial (sin perfil elegido): un chico entra directo; un adulto con PIN pide el suyo; Familia pide
+ *   el de cualquier adulto.
+ * Si ningún adulto cargó un PIN, no hay forma de bloquear y se entra libremente.
+ */
+export function pinHoldersFor(current: Profile | undefined, target: Profile, profiles: Profile[]): Profile[] {
+  if (current?.id === target.id) return [];
+  const adultsWithPin = profiles.filter((p) => p.active && p.role === 'adult' && p.pinHash);
+  if (current && current.role !== 'child') return [];
+  if (!current) {
+    if (target.role === 'child') return [];
+    if (target.role === 'adult') return target.pinHash ? [target] : [];
+    return adultsWithPin;
+  }
+  return target.role === 'adult' && target.pinHash ? [target, ...adultsWithPin.filter((a) => a.id !== target.id)] : adultsWithPin;
+}
+
+/** ¿El PIN corresponde a alguno de los autorizados? */
+export async function pinMatches(pin: string, holders: Profile[]): Promise<boolean> {
+  for (const h of holders) if (h.pinHash && (await hashPin(pin, h.id)) === h.pinHash) return true;
+  return false;
+}

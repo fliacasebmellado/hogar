@@ -10,7 +10,7 @@ import { ensurePaymentOccurrences } from '../services/money';
 import { dailyLocalBackup } from '../services/backup';
 import { categoriesFrom, notificationSettingsFrom, permissionsFrom, type NotificationSettings } from '../services/config';
 import type { CategoryModule, Category } from '../domain/catalog';
-import { can as canFn, type Capability, type PermissionMatrix } from '../domain/permissions';
+import { can as canFn, pinHoldersFor, type Capability, type PermissionMatrix } from '../domain/permissions';
 import type { ConfigEntry, Profile } from '../domain/types';
 import { ValidationError } from '../domain/validation';
 import { DEFAULT_AI_SETTINGS, type AISettings } from '../ai/types';
@@ -171,7 +171,7 @@ export function AppProvider({ repo, children }: { repo: Repo; children: ReactNod
   const value: AppCtx = {
     repo, sync, profiles, profile,
     setProfileId: (id) => { setCurrentId(id); repo.db.setKV('currentProfileId', id); },
-    requestProfile: (p) => { if (p.pinHash && p.id !== currentId) setPinRequest(p); else { setCurrentId(p.id); repo.db.setKV('currentProfileId', p.id); } },
+    requestProfile: (p) => { if (pinHoldersFor(profile, p, profiles).length) setPinRequest(p); else { setCurrentId(p.id); repo.db.setKV('currentProfileId', p.id); } },
     pinRequest, clearPinRequest: () => setPinRequest(null),
     configRows, categories: (m) => categoriesFrom(configRows, m), permissions, notifSettings,
     can: (c) => canFn(profile, c, permissions), toast, toasts, dismissToast, run, syncStatus, online, backend,

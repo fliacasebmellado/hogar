@@ -127,3 +127,22 @@ describe('reglas de negocio', () => {
     expect(parsed).toEqual(schema);
   });
 });
+
+describe('cambio de perfil: adultos libres, chicos con PIN de adulto', () => {
+  it('aplica las reglas', async () => {
+    const { pinHoldersFor } = await import('../src/domain/permissions');
+    const P = (id: string, role: any, pin = false) => ({ id, name: id, role, active: true, pinHash: pin ? 'x' : undefined }) as any;
+    const papa = P('papa', 'adult', true), mama = P('mama', 'adult', true), hijo = P('hijo', 'child'), hija = P('hija', 'child'), fam = P('fam', 'family');
+    const all = [papa, mama, hijo, hija, fam];
+    const ids = (l: any[]) => l.map((x) => x.id).sort();
+    expect(pinHoldersFor(papa, mama, all)).toEqual([]); // adulto → adulto: libre
+    expect(pinHoldersFor(mama, hijo, all)).toEqual([]); // adulto → chico: libre
+    expect(pinHoldersFor(fam, papa, all)).toEqual([]); // Familia → adulto: libre
+    expect(ids(pinHoldersFor(hijo, hija, all))).toEqual(['mama', 'papa']); // chico → hermano: PIN de adulto
+    expect(ids(pinHoldersFor(hijo, fam, all))).toEqual(['mama', 'papa']); // chico → Familia: PIN de adulto
+    expect(ids(pinHoldersFor(hijo, papa, all))).toEqual(['mama', 'papa']);
+    expect(pinHoldersFor(undefined, hijo, all)).toEqual([]); // pantalla inicial: chico entra directo
+    expect(ids(pinHoldersFor(undefined, papa, all))).toEqual(['papa']);
+    expect(pinHoldersFor(hijo, hija, [P('papa', 'adult'), hijo, hija])).toEqual([]); // sin PIN cargado no se puede bloquear
+  });
+});

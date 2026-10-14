@@ -6,7 +6,7 @@ import { AvatarStack } from './components';
 import { categoryIcon, tones } from './theme';
 import { relativeDay, today } from '../domain/dates';
 
-const FAMILY_COLOR = '#c2bbb4';
+const FAMILY_COLOR = '#877b5f';
 
 /** Color de un registro: el de la única persona involucrada; si son varias, el de la familia. */
 export function colorFor(ids: (string | undefined)[], profiles: Profile[]): string {

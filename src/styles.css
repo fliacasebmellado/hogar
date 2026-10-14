@@ -442,7 +442,7 @@ table.simple th { color: var(--text-3); font-weight: 600; font-size: 0.76rem; }
 :root {
   --bg: #f4f4f6; --surface: #ffffff; --surface-2: #f4f4f6; --surface-3: #ececf0; --border: #ececf0; --border-strong: #dcdce2;
   --text: #1f1d2b; --text-2: #4a4858; --text-3: #8b8a97;
-  --profile-raw: #c2bbb4;
+  --profile-raw: #877b5f;
   /* la paleta del perfil al 50 % de transparencia sobre el fondo (opaca para que el contenido no se vea detrás) */
   --band: color-mix(in srgb, var(--profile-raw) 50%, var(--bg));
   --accent: var(--profile-ink); --accent-text: #ffffff;

@@ -73,7 +73,8 @@ export const CURRENCIES = ['ARS', 'USD', 'EUR'];
 export const UNITS = ['u', 'kg', 'g', 'l', 'ml', 'paq', 'caja', 'docena'];
 export const PAYMENT_METHODS = ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Débito automático', 'Billetera virtual', 'Otro'];
 
-export const PROFILE_COLORS = ['#626b71', '#b1afb6', '#8c8e84', '#c4b9c0', '#c2bbb4', '#9fb1c2', '#c9b79c', '#a7b8a8'];
+// Paleta de la familia (color pleno; en pantalla se ve al 50 %): azul, verde, rosado, violeta, arena y extras suaves.
+export const PROFILE_COLORS = ['#73859f', '#839579', '#a58f99', '#55355b', '#877b5f', '#9fb1c2', '#c9b79c', '#a7b8a8'];
 
 export const ENTITY_LABEL: Record<string, string> = {
   tasks: 'Tarea', events: 'Evento', shoppingItems: 'Compra', shoppingLists: 'Lista', payments: 'Pago', expenses: 'Gasto',

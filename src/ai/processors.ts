@@ -25,26 +25,49 @@ export function speechRecognitionAvailable(): boolean {
 
 export interface LiveRecognizer { stop(): void; onText: (final: string, interim: string) => void; onError: (e: string) => void; onEnd?: () => void }
 
+/**
+ * Une los resultados del reconocimiento de voz sin repetir palabras. Chrome en Android manda cada resultado con la frase
+ * ACUMULADA ("comprar", "comprar banana", "comprar banana"…): si un texto empieza con lo ya reconocido, lo reemplaza;
+ * si ya está incluido, se ignora; si es nuevo, se agrega.
+ */
+export function mergeSpeechResults(results: { transcript: string; isFinal: boolean }[]): { final: string; interim: string } {
+  const norm = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const join = (acc: string, t: string) => {
+    const a = norm(acc), n = norm(t);
+    if (!n) return acc;
+    if (!a || n.startsWith(a)) return t.trim();
+    if (a.endsWith(n) || a.includes(n)) return acc;
+    return `${acc.trim()} ${t.trim()}`;
+  };
+  let final = '';
+  for (const r of results) if (r.isFinal) final = join(final, r.transcript);
+  let interim = '';
+  for (const r of results) if (!r.isFinal) interim = join(interim, r.transcript);
+  // Si el texto provisorio ya contiene lo final (Android), se muestra solo lo que falta.
+  const nf = norm(final), ni = norm(interim);
+  if (nf && ni.startsWith(nf)) interim = interim.trim().split(/\s+/).slice(final.trim().split(/\s+/).length).join(' ');
+  else if (nf && nf.includes(ni)) interim = '';
+  return { final: final.trim(), interim: interim.trim() };
+}
+
+const isAndroid = () => typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
+
 export function startLiveRecognition(lang = 'es-AR'): LiveRecognizer | null {
   const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   if (!SR) return null;
   const rec = new SR();
   rec.lang = lang;
-  rec.continuous = true;
+  // En Android el modo continuo repite frases: se escucha una frase por vez (termina sola después de una pausa).
+  rec.continuous = !isAndroid();
   rec.interimResults = true;
-  let finalText = '';
   const handle: LiveRecognizer = { stop: () => { try { rec.stop(); } catch { /* ya detenido */ } }, onText: () => {}, onError: () => {} };
   rec.onresult = (ev: any) => {
-    let interim = '';
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
-      const r = ev.results[i];
-      if (r.isFinal) finalText += r[0].transcript + ' ';
-      else interim += r[0].transcript;
-    }
-    handle.onText(finalText.trim(), interim);
+    const list = Array.from(ev.results as ArrayLike<any>).map((r: any) => ({ transcript: String(r[0]?.transcript ?? ''), isFinal: !!r.isFinal }));
+    const { final, interim } = mergeSpeechResults(list);
+    handle.onText(final, interim);
   };
   rec.onend = () => handle.onEnd?.();
-  rec.onerror = (e: any) => handle.onError(e.error === 'not-allowed' ? 'Permiso de micrófono denegado.' : e.error === 'network' ? 'El reconocimiento de voz necesita conexión.' : `Reconocimiento de voz: ${e.error}`);
+  rec.onerror = (e: any) => handle.onError(e.error === 'not-allowed' ? 'Permiso de micrófono denegado.' : e.error === 'network' ? 'El reconocimiento de voz necesita conexión.' : e.error === 'no-speech' ? 'No se escuchó nada. Tocá "Volver a hablar".' : `Reconocimiento de voz: ${e.error}`);
   try { rec.start(); } catch (e: any) { return null; }
   return handle;
 }

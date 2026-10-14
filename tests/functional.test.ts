@@ -249,7 +249,7 @@ describe('Perfiles y permisos', () => {
   });
   it('perfil Familia: ve lo de todos junto, pero no economía ni administración', async () => {
     const fam = (await repo.get('profiles', 'profile-familia'))!;
-    expect(fam).toMatchObject({ role: 'family', color: '#c2bbb4' });
+    expect(fam).toMatchObject({ role: 'family', color: '#877b5f' });
     expect(can(fam, 'finance.view')).toBe(false);
     expect(canOpenModule(fam, 'economia')).toBe(false);
     expect(canOpenModule(fam, 'compras')).toBe(true);
@@ -344,5 +344,17 @@ describe('Carpetas de Drive para cada archivo', () => {
     await repo.update('documents', d.id, { personId: 'profile-hijo' });
     await relocateDocumentFile(repo, d.id);
     expect((await repo.get('attachments', d.attachmentId!))!.folder).toBe('peques/Hijo');
+  });
+});
+
+describe('paleta de perfiles', () => {
+  it('cambia a la paleta nueva solo los colores de fábrica, sin tocar los elegidos a mano', async () => {
+    const r = await Repo.open('pal-' + uuid());
+    await r.create('profiles', { id: 'profile-x', name: 'X', role: 'adult', color: '#b1afb6', avatar: 'X', active: true, aliases: [], prefs: {} });
+    await r.create('profiles', { id: 'profile-y', name: 'Y', role: 'child', color: '#123456', avatar: 'Y', active: true, aliases: [], prefs: {} });
+    await r.db.setKV('seeded', true); await r.db.setKV('seedVersion', 2);
+    await ensureSeed(r);
+    expect((await r.get('profiles', 'profile-x'))!.color).toBe('#55355b');
+    expect((await r.get('profiles', 'profile-y'))!.color).toBe('#123456');
   });
 });

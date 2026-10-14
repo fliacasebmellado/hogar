@@ -124,7 +124,7 @@ function ProfileSheet({ open, profile: target, onClose }: { open: boolean; profi
         <div className="field">
           <span className="field-label">Foto o inicial</span>
           <div className="avatar-edit">
-            <Avatar profile={{ name: d.name || '?', color: d.color || '#c2bbb4', avatar: d.avatar ?? '' }} size={72} />
+            <Avatar profile={{ name: d.name || '?', color: d.color || '#877b5f', avatar: d.avatar ?? '' }} size={72} />
             <div className="row-wrap">
               <label className="btn btn-sm"><ImagePlus size={16} /> {isPhotoAvatar(d.avatar) ? 'Cambiar foto' : 'Subir foto'}
                 <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {

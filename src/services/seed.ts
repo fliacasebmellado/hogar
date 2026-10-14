@@ -13,14 +13,14 @@ const DEFAULT_HOME_BLOCKS = ['agenda', 'tareas', 'pagos', 'compras', 'casa', 're
 
 // Perfiles iniciales GENÉRICOS (el código es público). Los nombres reales se cargan en la app y viajan por la planilla:
 // un dispositivo nuevo los recibe al conectarse y descarta estos genéricos (ver SyncEngine.dropSeedPlaceholders).
-// Paleta Sherwin-Williams: Granite Peak, Swanky Gray, Ripe Olive, Enchant y Amazing Gray (Familia).
+// Paleta elegida por la familia (color pleno; en pantalla se ve al 50 %).
 export const FAMILY_PROFILE_ID = 'profile-familia';
 const INITIAL_PROFILES: Partial<Profile>[] = [
-  { id: 'profile-papa', name: 'Papá', role: 'adult', color: '#626b71', avatar: 'P', aliases: ['papa'] },
-  { id: 'profile-mama', name: 'Mamá', role: 'adult', color: '#b1afb6', avatar: 'M', aliases: ['mama'] },
-  { id: 'profile-hijo', name: 'Hijo', role: 'child', color: '#8c8e84', avatar: 'H', aliases: [] },
-  { id: 'profile-hija', name: 'Hija', role: 'child', color: '#c4b9c0', avatar: 'H', aliases: [] },
-  { id: FAMILY_PROFILE_ID, name: 'Familia', role: 'family', color: '#c2bbb4', avatar: '👪', aliases: ['todos', 'toda la familia'] },
+  { id: 'profile-papa', name: 'Papá', role: 'adult', color: '#73859f', avatar: 'P', aliases: ['papa'] },
+  { id: 'profile-mama', name: 'Mamá', role: 'adult', color: '#55355b', avatar: 'M', aliases: ['mama'] },
+  { id: 'profile-hijo', name: 'Hijo', role: 'child', color: '#839579', avatar: 'H', aliases: [] },
+  { id: 'profile-hija', name: 'Hija', role: 'child', color: '#a58f99', avatar: 'H', aliases: [] },
+  { id: FAMILY_PROFILE_ID, name: 'Familia', role: 'family', color: '#877b5f', avatar: '👪', aliases: ['todos', 'toda la familia'] },
 ];
 
 async function createMissing(repo: Repo, only?: string[]) {
@@ -51,11 +51,23 @@ export async function ensureSeed(repo: Repo): Promise<boolean> {
   return true;
 }
 
-/** Actualización v2: agrega el perfil Familia si falta (los perfiles de cada persona no se tocan). */
+/** Paleta anterior → paleta nueva. Solo se cambia un color que siga siendo el de fábrica (si alguien eligió otro, se respeta). */
+const PALETTE_V3: Record<string, string> = { '#626b71': '#73859f', '#b1afb6': '#55355b', '#8c8e84': '#839579', '#c4b9c0': '#a58f99', '#c2bbb4': '#877b5f' };
+
+/** Actualizaciones: v2 agrega el perfil Familia si falta; v3 aplica la paleta nueva (se revisa en cada inicio porque los
+ * perfiles pueden llegar después desde la planilla con el color viejo). */
 async function upgradeSeed(repo: Repo) {
-  if ((await repo.db.getKV<number>('seedVersion', 1)) >= 2) return;
-  await repo.tx(async () => { await createMissing(repo, [FAMILY_PROFILE_ID]); });
-  await repo.db.setKV('seedVersion', 2);
+  if ((await repo.db.getKV<number>('seedVersion', 1)) < 2) {
+    await repo.tx(async () => { await createMissing(repo, [FAMILY_PROFILE_ID]); });
+    await repo.db.setKV('seedVersion', 2);
+  }
+  await applyPaletteV3(repo);
+}
+
+export async function applyPaletteV3(repo: Repo) {
+  const old = (await repo.list('profiles')).filter((p) => PALETTE_V3[p.color?.toLowerCase()]);
+  if (!old.length) return;
+  await repo.tx(async () => { for (const p of old) await repo.update('profiles', p.id, { color: PALETTE_V3[p.color.toLowerCase()] }, { origin: 'sistema', skipHistory: true }); });
 }
 
 export { DEFAULT_HOME_BLOCKS };

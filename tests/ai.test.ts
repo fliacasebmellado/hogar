@@ -275,3 +275,17 @@ describe('Modelo local opcional', () => {
     spy.mockRestore();
   });
 });
+
+describe('dictado por voz: sin palabras repetidas', () => {
+  it('Chrome en Android manda la frase acumulada varias veces: queda una sola vez', async () => {
+    const { mergeSpeechResults } = await import('../src/ai/processors');
+    expect(mergeSpeechResults([
+      { transcript: 'comprar', isFinal: true }, { transcript: 'comprar banana', isFinal: true }, { transcript: 'comprar banana', isFinal: true },
+    ]).final).toBe('comprar banana');
+    expect(mergeSpeechResults([{ transcript: 'comprar', isFinal: true }, { transcript: 'comprar banana', isFinal: false }])).toEqual({ final: 'comprar', interim: 'banana' });
+  });
+  it('en computadora (frases separadas) se juntan en orden', async () => {
+    const { mergeSpeechResults } = await import('../src/ai/processors');
+    expect(mergeSpeechResults([{ transcript: 'comprar banana', isFinal: true }, { transcript: ' y leche', isFinal: true }]).final).toBe('comprar banana y leche');
+  });
+});

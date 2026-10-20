@@ -289,3 +289,23 @@ describe('dictado por voz: sin palabras repetidas', () => {
     expect(mergeSpeechResults([{ transcript: 'comprar banana', isFinal: true }, { transcript: ' y leche', isFinal: true }]).final).toBe('comprar banana y leche');
   });
 });
+
+const HIJO_ID = 'profile-hijo';
+describe('turnos con formato de ficha (WhatsApp del centro médico)', () => {
+  it('es UN solo evento, para el chico correcto, con lugar, hora y aviso', async () => {
+    await repo.update('profiles', HIJO_ID, { name: 'Tomás' }); // nombres inventados (el código es público)
+    const props = await interpret(`Paciente: PEREZ GOMEZ TOMAS JUAN
+OS: PARTICULAR - PARTICULAR
+
+Centro: Centro Médico Ejemplo (Calle Falsa 123 - CIUDAD)
+Fecha: Martes 27/10/2026
+Hora: 17:00
+Médico Actuante: JUAN ROMERO`);
+    expect(props).toHaveLength(1);
+    const e = props[0];
+    expect(e.kind).toBe('evento');
+    expect(e.fields).toMatchObject({ title: 'Turno con Juan Romero', start: '2026-10-27T17:00', category: 'turnos', participantIds: [HIJO_ID], location: 'Centro Médico Ejemplo (Calle Falsa 123 - CIUDAD)' });
+    expect(e.fields.description).toContain('PARTICULAR');
+    expect(e.ambiguities).toHaveLength(0);
+  });
+});

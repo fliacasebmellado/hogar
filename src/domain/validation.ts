@@ -70,6 +70,7 @@ const RULES: Partial<Record<EntityName, Rule[]>> = {
     (r) => (r.firstDose && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(r.firstDose) ? 'La primera toma necesita fecha y hora.' : null)],
   doseLogs: [required('medicationId', 'el medicamento'), required('plannedAt', 'la hora prevista')],
   doctors: [required('name', 'el nombre')],
+  healthCards: [required('personId', 'de quién es'), positive('weightKg', 'El peso'), positive('heightCm', 'La altura'), optDate('measuredAt', 'La fecha de medición')],
   vaccinations: [required('vaccine', 'la vacuna'), optDate('dueDate', 'La fecha'), optDate('appliedDate', 'La fecha de aplicación')],
 };
 

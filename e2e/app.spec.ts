@@ -322,6 +322,13 @@ test('compras: agregar un rubro propio con ícono y cargar productos en él', as
 test('salud: solo para adultos; receta escrita, horarios y cartilla', async ({ page }) => {
   await enter(page, 'Mamá');
   await page.goto('./#/salud');
+  // Ficha de salud: alergias bien visibles
+  await page.getByRole('button', { name: 'Editar la ficha de Hija' }).click();
+  await page.getByRole('dialog').getByLabel('Alergias').fill('Penicilina');
+  await page.getByRole('dialog').getByLabel('Grupo y factor').selectOption('0+');
+  await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('.ficha', { hasText: 'Hija' }).getByText('Penicilina')).toBeVisible();
+  await page.getByRole('tab', { name: 'Medicación' }).click();
   await page.getByRole('button', { name: /Pegar o escribir/ }).click();
   await page.getByLabel('Texto de la indicación').fill('Dx: Otitis\nAmoxicilina 250 mg cada 8 horas por 7 días\nIbuprofeno 5 ml si fiebre');
   await page.getByRole('button', { name: 'Interpretar' }).click();

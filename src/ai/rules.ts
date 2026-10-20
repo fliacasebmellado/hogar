@@ -181,7 +181,58 @@ export function parseShoppingItems(seg: string): ShoppingProposalItem[] {
   return items;
 }
 
+// ---------- Turnos con formato de ficha ("Paciente: … / Fecha: … / Hora: … / Médico: …") ----------
+const APPT_KEYS: [RegExp, string][] = [
+  [/^(paciente|nombre|afiliado)$/, 'patient'], [/^(fecha|dia|fecha del turno)$/, 'date'], [/^(hora|horario)$/, 'time'],
+  [/^(medico|medico actuante|medica|profesional|doctor|doctora|dr|dra|especialista|prestador)$/, 'doctor'],
+  [/^(centro|lugar|sede|consultorio|clinica|institucion|direccion|domicilio|establecimiento)$/, 'place'],
+  [/^(especialidad|servicio|practica|estudio|tipo de turno|motivo)$/, 'specialty'], [/^(os|obra social|cobertura|prepaga|plan)$/, 'insurance'],
+];
+const titleCase = (s: string) => s.toLowerCase().replace(/(^|[\s(-])([a-záéíóúñ])/g, (_, a, b) => a + b.toUpperCase());
+
+/** Lee un mensaje de turno con renglones "Clave: valor". Devuelve null si no tiene esa forma (fecha y al menos otros 2 datos). */
+export function parseAppointment(text: string): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  let hits = 0;
+  for (const raw of text.replace(/\r/g, '').split('\n')) {
+    const m = raw.trim().match(/^([^:]{2,30}):\s*(.+)$/);
+    if (!m) continue;
+    const key = fold(m[1]).replace(/[.°]/g, '').replace(/\s+/g, ' ').trim();
+    const hit = APPT_KEYS.find(([re]) => re.test(key));
+    if (!hit) continue;
+    if (!out[hit[1]]) { out[hit[1]] = m[2].trim(); hits++; }
+  }
+  if (!out.date || hits < 3) return null;
+  if (!out.time && !out.doctor && !out.place && !/\bturno\b/.test(fold(text))) return null;
+  return out;
+}
+
+export function appointmentProposal(text: string, a: Record<string, string>, ctx: InterpretContext): Proposal {
+  const numeric = a.date.match(/\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?/);
+  const dateHit = extractDates(numeric ? numeric[0] : a.date, ctx.now).find((d) => d.date && !d.ambiguity);
+  const tm = (a.time ?? '').match(/(\d{1,2})[:.hH](\d{2})/) ?? (a.time ?? '').match(/^(\d{1,2})\s*(?:hs?|horas)?$/);
+  const time = tm ? `${tm[1].padStart(2, '0')}:${(tm[2] ?? '00').padStart(2, '0')}` : undefined;
+  const date = dateHit?.date;
+  // Paciente: se busca cada palabra del nombre entre los perfiles ("PEREZ GOMEZ TOMAS JUAN" → Tomás).
+  const words = fold(a.patient ?? '').split(/[^a-z]+/).filter((w) => w.length > 2);
+  const person = ctx.profiles.find((p) => p.active && p.role !== 'family' && [p.name, ...p.aliases].some((n) => words.includes(fold(n))));
+  const doctor = a.doctor ? titleCase(a.doctor) : undefined;
+  const title = ['Turno', a.specialty ? titleCase(a.specialty) : '', doctor ? `con ${doctor}` : ''].filter(Boolean).join(' ').replace(/^Turno$/, a.place ? `Turno en ${a.place.split('(')[0].trim()}` : 'Turno');
+  const p = base('evento', 'crear', text, {
+    title, start: date ? (time ? `${date}T${time}` : date) : undefined, allDay: !!date && !time, category: 'turnos',
+    participantIds: person ? [person.id] : [], ownerId: person?.id ?? ctx.currentProfileId, reminders: [60, 24 * 60], recurrence: null,
+    location: a.place, description: text.trim(), syncCalendar: false,
+  }, 0.8);
+  if (!date) p.missing.push('start');
+  if (!time && date) p.warnings.push('No se encontró la hora del turno: revisala.');
+  if (!person && a.patient) p.warnings.push(`No se reconoció al paciente ("${a.patient}"): elegí para quién es.`);
+  return p;
+}
+
 export function buildProposalsFromText(text: string, ctx: InterpretContext): Proposal[] {
+  // Un mensaje de turno (como los que mandan por WhatsApp los centros médicos) es UN solo evento, no un renglón por cosa.
+  const appt = parseAppointment(text);
+  if (appt) return [appointmentProposal(text, appt, ctx)];
   const proposals: Proposal[] = [];
   const now = ctx.now;
   const groupId = uuid();

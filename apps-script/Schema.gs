@@ -199,6 +199,10 @@ var SCHEMA = {
     "vaccinations": [
       "app",
       "Salud - Vacunas"
+    ],
+    "healthCards": [
+      "app",
+      "Salud - Fichas"
     ]
   },
   "required": {
@@ -272,6 +276,9 @@ var SCHEMA = {
     ],
     "vaccinations": [
       "vaccine"
+    ],
+    "healthCards": [
+      "personId"
     ]
   },
   "entities": {
@@ -1862,6 +1869,78 @@ var SCHEMA = {
         "string",
         "Calendario (ID)"
       ]
+    ],
+    "healthCards": [
+      [
+        "personId",
+        "person",
+        "Persona"
+      ],
+      [
+        "bloodType",
+        "string",
+        "Grupo y factor"
+      ],
+      [
+        "allergies",
+        "string",
+        "Alergias"
+      ],
+      [
+        "conditions",
+        "string",
+        "Condiciones / antecedentes"
+      ],
+      [
+        "regularMeds",
+        "string",
+        "Medicación habitual"
+      ],
+      [
+        "insurance",
+        "string",
+        "Obra social / prepaga"
+      ],
+      [
+        "insurancePlan",
+        "string",
+        "Plan"
+      ],
+      [
+        "insuranceNumber",
+        "string",
+        "N.º de afiliado"
+      ],
+      [
+        "weightKg",
+        "number",
+        "Peso (kg)"
+      ],
+      [
+        "heightCm",
+        "number",
+        "Altura (cm)"
+      ],
+      [
+        "measuredAt",
+        "date",
+        "Medido el"
+      ],
+      [
+        "doctorId",
+        "string",
+        "Médico de cabecera (ID)"
+      ],
+      [
+        "emergencyNotes",
+        "string",
+        "Para una urgencia"
+      ],
+      [
+        "dni",
+        "string",
+        "DNI"
+      ]
     ]
   },
   "syncOrder": [
@@ -1873,6 +1952,7 @@ var SCHEMA = {
     "investments",
     "attachments",
     "doctors",
+    "healthCards",
     "healthNotes",
     "treatments",
     "medications",

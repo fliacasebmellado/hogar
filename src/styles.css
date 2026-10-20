@@ -722,3 +722,10 @@ details.rubro > .card { border-top-left-radius: 0; border-top-right-radius: 0; }
 .doctor-card { display: grid; gap: 10px; }
 .doctor-main { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
 .doctor-main strong { font-size: 1.08rem; }
+/* Fichas de salud */
+.ficha { display: grid; gap: 12px; }
+.ficha-alert { padding: 10px 14px; border-radius: 12px; background: var(--alert-bg); color: var(--alert-fg); }
+.ficha-ok { font-size: 0.85rem; color: var(--text-3); }
+.ficha-grid { display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 8px 14px; margin: 0; font-size: 0.95rem; }
+.ficha-grid dt { color: var(--text-3); }
+.ficha-grid dd { margin: 0; word-break: break-word; }

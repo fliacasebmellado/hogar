@@ -71,7 +71,8 @@
     "medications": ["app", "Salud - Medicamentos"],
     "doseLogs": ["app", "Salud - Tomas"],
     "doctors": ["app", "Salud - Cartilla"],
-    "vaccinations": ["app", "Salud - Vacunas"]
+    "vaccinations": ["app", "Salud - Vacunas"],
+    "healthCards": ["app", "Salud - Fichas"]
   },
   "required": {
     "tasks": ["title"],
@@ -94,7 +95,8 @@
     "medications": ["treatmentId", "name"],
     "doseLogs": ["medicationId", "plannedAt"],
     "doctors": ["name"],
-    "vaccinations": ["vaccine"]
+    "vaccinations": ["vaccine"],
+    "healthCards": ["personId"]
   },
   "entities": {
     "household": [
@@ -460,7 +462,23 @@
       ["lot", "string", "Lote"],
       ["notes", "string", "Notas"],
       ["scheduleId", "string", "Calendario (ID)"]
+    ],
+    "healthCards": [
+      ["personId", "person", "Persona"],
+      ["bloodType", "string", "Grupo y factor"],
+      ["allergies", "string", "Alergias"],
+      ["conditions", "string", "Condiciones / antecedentes"],
+      ["regularMeds", "string", "Medicación habitual"],
+      ["insurance", "string", "Obra social / prepaga"],
+      ["insurancePlan", "string", "Plan"],
+      ["insuranceNumber", "string", "N.º de afiliado"],
+      ["weightKg", "number", "Peso (kg)"],
+      ["heightCm", "number", "Altura (cm)"],
+      ["measuredAt", "date", "Medido el"],
+      ["doctorId", "string", "Médico de cabecera (ID)"],
+      ["emergencyNotes", "string", "Para una urgencia"],
+      ["dni", "string", "DNI"]
     ]
   },
-  "syncOrder": ["household", "config", "profiles", "rooms", "providers", "investments", "attachments", "doctors", "healthNotes", "treatments", "medications", "doseLogs", "vaccinations", "documents", "assets", "maintenance", "shoppingLists", "tasks", "events", "payments", "expenses", "shoppingItems", "repairs", "investmentContracts", "investmentTaxes", "investmentWorks", "notes", "captures", "history"]
+  "syncOrder": ["household", "config", "profiles", "rooms", "providers", "investments", "attachments", "doctors", "healthCards", "healthNotes", "treatments", "medications", "doseLogs", "vaccinations", "documents", "assets", "maintenance", "shoppingLists", "tasks", "events", "payments", "expenses", "shoppingItems", "repairs", "investmentContracts", "investmentTaxes", "investmentWorks", "notes", "captures", "history"]
 }

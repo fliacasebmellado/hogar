@@ -169,6 +169,10 @@ export interface Vaccination extends BaseRecord {
   personId: ID; vaccine: string; dose?: string; ageLabel?: string; dueDate?: ISODate; status: string; appliedDate?: ISODate;
   place?: string; lot?: string; notes?: string; scheduleId?: string;
 }
+export interface HealthCard extends BaseRecord {
+  personId: ID; bloodType?: string; allergies?: string; conditions?: string; regularMeds?: string; insurance?: string; insurancePlan?: string;
+  insuranceNumber?: string; weightKg?: number; heightCm?: number; measuredAt?: ISODate; doctorId?: ID; emergencyNotes?: string; dni?: string;
+}
 export interface DoseLog extends BaseRecord { medicationId: ID; plannedAt: string; takenAt?: string; by?: ID; skipped?: boolean; note?: string }
 
 export interface EntityMap {
@@ -177,14 +181,14 @@ export interface EntityMap {
   providers: Provider; assets: Asset; maintenance: Maintenance; repairs: Repair; documents: DocumentRecord;
   attachments: Attachment; notes: Note; captures: Capture; history: HistoryEntry;
   investments: Investment; investmentContracts: InvestmentContract; investmentTaxes: InvestmentTax; investmentWorks: InvestmentWork;
-  healthNotes: HealthNote; treatments: Treatment; medications: Medication; doseLogs: DoseLog; doctors: Doctor; vaccinations: Vaccination;
+  healthNotes: HealthNote; treatments: Treatment; medications: Medication; doseLogs: DoseLog; doctors: Doctor; vaccinations: Vaccination; healthCards: HealthCard;
 }
 export type EntityName = keyof EntityMap;
 export const ENTITY_NAMES: EntityName[] = [
   'household', 'profiles', 'config', 'tasks', 'events', 'shoppingLists', 'shoppingItems', 'payments', 'expenses', 'rooms',
   'providers', 'assets', 'maintenance', 'repairs', 'documents', 'attachments', 'notes', 'captures', 'history',
   'investments', 'investmentContracts', 'investmentTaxes', 'investmentWorks',
-  'healthNotes', 'treatments', 'medications', 'doseLogs', 'doctors', 'vaccinations',
+  'healthNotes', 'treatments', 'medications', 'doseLogs', 'doctors', 'vaccinations', 'healthCards',
 ];
 
 // ---- Tablas solo locales ----

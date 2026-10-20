@@ -47,11 +47,12 @@ export function canSeeDocument(profile: Profile | undefined | null, doc: Documen
   return can(profile, 'documents.private', matrix);
 }
 
-export type ModuleKey = 'inicio' | 'agenda' | 'tareas' | 'compras' | 'economia' | 'inversiones' | 'casa' | 'familia' | 'documentos' | 'asistente' | 'ajustes';
+export type ModuleKey = 'inicio' | 'agenda' | 'tareas' | 'compras' | 'economia' | 'inversiones' | 'casa' | 'salud' | 'familia' | 'documentos' | 'asistente' | 'ajustes';
 export function canOpenModule(profile: Profile | undefined | null, mod: ModuleKey, matrix?: PermissionMatrix): boolean {
   if (!profile) return mod === 'ajustes' || mod === 'inicio';
   if (mod === 'economia' || mod === 'inversiones') return can(profile, 'finance.view', matrix); // nunca para chicos ni el perfil Familia
   if (mod === 'casa') return profile.role !== 'child' || can(profile, 'house.edit', matrix);
+  if (mod === 'salud') return profile.role === 'adult'; // información médica: solo adultos (ni chicos ni el perfil Familia)
   return true;
 }
 

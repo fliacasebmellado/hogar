@@ -175,6 +175,30 @@ var SCHEMA = {
     "documents": [
       "documentos",
       "Documentos"
+    ],
+    "healthNotes": [
+      "app",
+      "Salud - Indicaciones"
+    ],
+    "treatments": [
+      "app",
+      "Salud - Tratamientos"
+    ],
+    "medications": [
+      "app",
+      "Salud - Medicamentos"
+    ],
+    "doseLogs": [
+      "app",
+      "Salud - Tomas"
+    ],
+    "doctors": [
+      "app",
+      "Salud - Cartilla"
+    ],
+    "vaccinations": [
+      "app",
+      "Salud - Vacunas"
     ]
   },
   "required": {
@@ -228,6 +252,26 @@ var SCHEMA = {
     "investmentWorks": [
       "investmentId",
       "title"
+    ],
+    "healthNotes": [
+      "title"
+    ],
+    "treatments": [
+      "personId"
+    ],
+    "medications": [
+      "treatmentId",
+      "name"
+    ],
+    "doseLogs": [
+      "medicationId",
+      "plannedAt"
+    ],
+    "doctors": [
+      "name"
+    ],
+    "vaccinations": [
+      "vaccine"
     ]
   },
   "entities": {
@@ -1536,6 +1580,288 @@ var SCHEMA = {
         "string",
         "Notas"
       ]
+    ],
+    "healthNotes": [
+      [
+        "personId",
+        "person",
+        "Persona"
+      ],
+      [
+        "kind",
+        "string",
+        "Tipo"
+      ],
+      [
+        "title",
+        "string",
+        "Título"
+      ],
+      [
+        "body",
+        "string",
+        "Indicaciones"
+      ],
+      [
+        "doctor",
+        "string",
+        "Médico/a"
+      ],
+      [
+        "date",
+        "date",
+        "Fecha"
+      ],
+      [
+        "pinned",
+        "boolean",
+        "Plan de crisis"
+      ],
+      [
+        "attachmentIds",
+        "json",
+        "Archivos"
+      ]
+    ],
+    "treatments": [
+      [
+        "personId",
+        "person",
+        "Persona"
+      ],
+      [
+        "diagnosis",
+        "string",
+        "Diagnóstico"
+      ],
+      [
+        "doctor",
+        "string",
+        "Médico/a"
+      ],
+      [
+        "place",
+        "string",
+        "Lugar"
+      ],
+      [
+        "startDate",
+        "date",
+        "Inicio"
+      ],
+      [
+        "status",
+        "string",
+        "Estado"
+      ],
+      [
+        "notes",
+        "string",
+        "Indicaciones generales"
+      ],
+      [
+        "attachmentIds",
+        "json",
+        "Archivos"
+      ],
+      [
+        "sourceText",
+        "string",
+        "Texto leído de la receta"
+      ]
+    ],
+    "medications": [
+      [
+        "treatmentId",
+        "string",
+        "Tratamiento (ID)"
+      ],
+      [
+        "personId",
+        "person",
+        "Persona"
+      ],
+      [
+        "name",
+        "string",
+        "Medicamento"
+      ],
+      [
+        "dose",
+        "string",
+        "Dosis"
+      ],
+      [
+        "everyHours",
+        "number",
+        "Cada (horas)"
+      ],
+      [
+        "days",
+        "number",
+        "Días"
+      ],
+      [
+        "firstDose",
+        "string",
+        "Primera toma"
+      ],
+      [
+        "times",
+        "json",
+        "Horarios fijos"
+      ],
+      [
+        "asNeeded",
+        "boolean",
+        "Solo si hace falta"
+      ],
+      [
+        "notes",
+        "string",
+        "Indicaciones"
+      ],
+      [
+        "status",
+        "string",
+        "Estado"
+      ]
+    ],
+    "doseLogs": [
+      [
+        "medicationId",
+        "string",
+        "Medicamento (ID)"
+      ],
+      [
+        "plannedAt",
+        "string",
+        "Hora prevista"
+      ],
+      [
+        "takenAt",
+        "string",
+        "Hora en que se dio"
+      ],
+      [
+        "by",
+        "person",
+        "La dio"
+      ],
+      [
+        "skipped",
+        "boolean",
+        "Salteada"
+      ],
+      [
+        "note",
+        "string",
+        "Nota"
+      ]
+    ],
+    "doctors": [
+      [
+        "name",
+        "string",
+        "Nombre"
+      ],
+      [
+        "specialty",
+        "string",
+        "Especialidad"
+      ],
+      [
+        "personIds",
+        "persons",
+        "Atiende a"
+      ],
+      [
+        "phone",
+        "string",
+        "Teléfono"
+      ],
+      [
+        "whatsapp",
+        "string",
+        "WhatsApp"
+      ],
+      [
+        "address",
+        "string",
+        "Dirección"
+      ],
+      [
+        "insurance",
+        "string",
+        "Obra social / prepaga"
+      ],
+      [
+        "email",
+        "string",
+        "Mail"
+      ],
+      [
+        "notes",
+        "string",
+        "Notas"
+      ]
+    ],
+    "vaccinations": [
+      [
+        "personId",
+        "person",
+        "Persona"
+      ],
+      [
+        "vaccine",
+        "string",
+        "Vacuna"
+      ],
+      [
+        "dose",
+        "string",
+        "Dosis"
+      ],
+      [
+        "ageLabel",
+        "string",
+        "Edad"
+      ],
+      [
+        "dueDate",
+        "date",
+        "Le corresponde"
+      ],
+      [
+        "status",
+        "string",
+        "Estado"
+      ],
+      [
+        "appliedDate",
+        "date",
+        "Aplicada el"
+      ],
+      [
+        "place",
+        "string",
+        "Lugar"
+      ],
+      [
+        "lot",
+        "string",
+        "Lote"
+      ],
+      [
+        "notes",
+        "string",
+        "Notas"
+      ],
+      [
+        "scheduleId",
+        "string",
+        "Calendario (ID)"
+      ]
     ]
   },
   "syncOrder": [
@@ -1546,6 +1872,12 @@ var SCHEMA = {
     "providers",
     "investments",
     "attachments",
+    "doctors",
+    "healthNotes",
+    "treatments",
+    "medications",
+    "doseLogs",
+    "vaccinations",
     "documents",
     "assets",
     "maintenance",

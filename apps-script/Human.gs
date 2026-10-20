@@ -20,6 +20,10 @@ var DEFAULTS_ = {
   investmentContracts: { currency: 'ARS', status: 'vigente' },
   investmentTaxes: { currency: 'ARS', status: 'pendiente' },
   investmentWorks: { currency: 'ARS', status: 'pendiente' },
+  healthNotes: { kind: 'indicacion' },
+  treatments: { status: 'activo' },
+  medications: { status: 'activo' },
+  vaccinations: { status: 'pendiente' },
 };
 
 function onSheetEdit(e) {

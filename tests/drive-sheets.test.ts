@@ -199,3 +199,15 @@ describe('archivos en la carpeta que corresponde', () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe('pestañas nuevas', () => {
+  it('si falta una pestaña de una versión nueva (Salud), se crea sola al sincronizar', async () => {
+    const book = server.book('app');
+    const tab = book.getSheetByName('Salud - Vacunas');
+    if (tab) book.deleteSheet(tab);
+    expect(server.book('app').getSheetByName('Salud - Vacunas')).toBeFalsy();
+    const d = await device(server);
+    expect((await d.engine.syncNow()).ok).toBe(true);
+    expect(server.book('app').getSheetByName('Salud - Vacunas')).toBeTruthy();
+  });
+});

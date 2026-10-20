@@ -144,6 +144,9 @@ var ENUMS_ = {
   'investmentContracts.frequency': ['mensual', 'bimestral', 'trimestral', 'semestral', 'anual', 'única vez'],
   'investmentTaxes.status': ['pendiente', 'pagado', 'vencido'], 'investmentTaxes.currency': ['ARS', 'USD'],
   'investmentWorks.status': ['pendiente', 'en curso', 'terminado'], 'investmentWorks.currency': ['ARS', 'USD'],
+  'healthNotes.kind': ['plan', 'indicacion', 'diagnostico', 'alergia', 'control', 'vacuna'],
+  'treatments.status': ['activo', 'terminado'], 'medications.status': ['activo', 'terminado', 'suspendido'],
+  'vaccinations.status': ['pendiente', 'aplicada', 'no corresponde'],
 };
 
 /** Formato de una pestaña nueva o ampliada: texto plano, columnas técnicas ocultas, listas desplegables. */
@@ -223,6 +226,8 @@ function removeDefaultSheets_() {
 function assertSchemaOk_(entity) {
   var sh = sheetOf_(entity);
   var pl = placement_(entity);
+  // Pestaña nueva de una versión más reciente de la app (p. ej. "Salud - Vacunas"): se crea sola, sin tocar las demás.
+  if (!sh) { validateSheets_(true); sh = sheetOf_(entity); }
   if (!sh) throw err_('Falta la pestaña "' + pl.tab + '". Ejecutá inicializar().', 'schema');
   var cols = columns_(entity), labels = labels_(entity);
   if (sh.getMaxColumns() < cols.length) throw err_('La pestaña "' + pl.tab + '" tiene menos columnas que las esperadas. Ejecutá inicializar().', 'schema');

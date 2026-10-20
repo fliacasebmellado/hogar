@@ -19,6 +19,11 @@ const DEFAULTS: Partial<Record<EntityName, Record<string, any>>> = {
   investmentContracts: { currency: 'ARS', status: 'vigente', kind: 'otro' },
   investmentTaxes: { currency: 'ARS', status: 'pendiente' },
   investmentWorks: { currency: 'ARS', status: 'pendiente' },
+  healthNotes: { kind: 'indicacion', attachmentIds: [] },
+  treatments: { status: 'activo', attachmentIds: [] },
+  medications: { status: 'activo' },
+  doctors: { personIds: [] },
+  vaccinations: { status: 'pendiente' },
 };
 
 export function normalizeRecord(entity: EntityName, r: any): any {

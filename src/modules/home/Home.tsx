@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
+import { HeartPulse, ChevronDown, Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
 import { useApp, useLive } from '../../app/context';
 import type { CalendarEvent, Capture, InvestmentTax, Payment, Profile, Repair, ShoppingItem, Task } from '../../domain/types';
 import { addDays, diffDays, formatDate, formatDateTimeHuman, relativeDay, today } from '../../domain/dates';
@@ -15,6 +15,8 @@ import { TaskSheet } from '../tasks/TaskSheet';
 import { EventSheet } from '../agenda/EventSheet';
 import { AskSheet } from '../shopping/AskSheet';
 import { setPendingPhotos } from '../inbox/pendingPhoto';
+import { dosesBetween, loadHealth } from '../../services/health';
+import { vaccineState } from '../../services/vaccines';
 
 export const HOME_BLOCK_LABEL: Record<string, string> = {
   agenda: 'Agenda', tareas: 'Tareas', pagos: 'Pagos próximos', compras: 'Compras pendientes', casa: 'Casa y mantenimiento',
@@ -52,6 +54,20 @@ function CameraCircle({ onPhotos }: { onPhotos: (f: File[]) => void }) {
       <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />
     </label>
   );
+}
+
+/** Salud (solo adultos): tomas de hoy sin dar y vacunas que tocan. */
+function HealthTile() {
+  const n = useLive(async (r) => {
+    const h = await loadHealth(r);
+    const now = new Date();
+    const doses = dosesBetween(h.medications, h.doseLogs, h.treatments, new Date(now.getTime() - 12 * 3600e3), new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1), now).filter((d) => !d.log);
+    const late = doses.filter((d) => d.status === 'atrasada').length;
+    const vac = h.vaccinations.filter((v) => !v.deleted && vaccineState(v) === 'toca_ahora').length;
+    return { doses: doses.length, late, vac };
+  }, [], { doses: 0, late: 0, vac: 0 });
+  const meta = n.late ? pl(n.late, 'toma atrasada', 'tomas atrasadas') : n.doses ? pl(n.doses, 'toma hoy', 'tomas hoy') : n.vac ? pl(n.vac, 'vacuna para dar', 'vacunas para dar') : 'Al día';
+  return <Tile to="/salud" label="Salud" meta={meta} Icon={HeartPulse} badge={n.doses + n.vac} alert={n.late > 0} />;
 }
 
 function Tile({ to, label, meta, Icon, badge, alert }: { to: string; label: string; meta: string; Icon: any; badge?: number; alert?: boolean }) {
@@ -213,6 +229,7 @@ export default function Home() {
         <Tile to="/compras" label="Compras" meta={`${pendingItems.length} en la lista`} Icon={ShoppingCart} badge={pendingItems.length} />
         {can('finance.view') && <Tile to="/economia" label="Economía" meta={dues.length ? `${dues.length} por vencer` : 'Al día'} Icon={Wallet} badge={dues.length} alert={dueAlert > 0} />}
         {can('finance.view') && <InvTile taxes={d.invTaxes} />}
+        {profile?.role === 'adult' && <HealthTile />}
         {!isChild && <Tile to="/casa" label="Casa" meta={openRepairs.length ? pl(openRepairs.length, 'reparación', 'reparaciones') : 'Todo en orden'} Icon={Wrench} badge={openRepairs.length} />}
         <Tile to="/documentos" label="Documentos" meta="Archivo" Icon={FileText} />
         <Tile to="/familia" label="Familia" meta="Perfiles" Icon={Users} />

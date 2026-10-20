@@ -3,9 +3,10 @@ import { ErrorBoundary, Loading } from '../ui/Boundary';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Home, CalendarDays, CheckSquare, ShoppingCart, Wallet, Wrench, Users, FileText, Inbox, Settings, Search, Bell, Plus,
-  Cloud, CloudOff, RefreshCw, HardDrive, AlertTriangle, Menu, Building2, House,
+  Cloud, CloudOff, RefreshCw, HardDrive, AlertTriangle, Menu, Building2, House, HeartPulse,
 } from 'lucide-react';
 import { useApp, useLive } from './context';
+import { loadHealth } from '../services/health';
 import { Avatar } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
 import { canOpenModule, pinHoldersFor, pinMatches, type ModuleKey } from '../domain/permissions';
@@ -21,6 +22,7 @@ export const NAV: { key: ModuleKey; to: string; label: string; icon: any; color:
   { key: 'economia', to: '/economia', label: 'Economía', icon: Wallet, color: 'economia', desc: 'Pagos, gastos y reportes' },
   { key: 'inversiones', to: '/inversiones', label: 'Inversiones', icon: Building2, color: 'inversiones', desc: 'Propiedades, contratos e impuestos' },
   { key: 'casa', to: '/casa', label: 'Casa', icon: Wrench, color: 'casa', desc: 'Reparaciones y mantenimiento' },
+  { key: 'salud', to: '/salud', label: 'Salud', icon: HeartPulse, color: 'salud', desc: 'Indicaciones médicas y medicación' },
   { key: 'familia', to: '/familia', label: 'Familia', icon: Users, color: 'familia', desc: 'Perfiles de cada integrante' },
   { key: 'documentos', to: '/documentos', label: 'Documentos', icon: FileText, color: 'documentos', desc: 'Archivo central' },
   { key: 'asistente', to: '/asistente', label: 'Asistente', icon: Inbox, color: 'asistente', desc: 'Capturas y bandeja de entrada' },
@@ -34,7 +36,7 @@ export function ModuleIcon({ color, Icon, size = 20, box = 40 }: { color: Module
 
 const TITLES: Record<string, string> = {
   '/': 'Inicio', '/agenda': 'Agenda', '/tareas': 'Tareas', '/compras': 'Compras', '/economia': 'Economía',
-  '/casa': 'Casa', '/inversiones': 'Inversiones', '/familia': 'Familia', '/documentos': 'Documentos', '/asistente': 'Asistente',
+  '/casa': 'Casa', '/salud': 'Salud', '/inversiones': 'Inversiones', '/familia': 'Familia', '/documentos': 'Documentos', '/asistente': 'Asistente',
   '/ajustes': 'Ajustes', '/buscar': 'Buscar', '/notificaciones': 'Avisos',
 };
 
@@ -153,8 +155,8 @@ function SyncPill() {
 function NotifBell() {
   const { profile, notifSettings, can, syncStatus, backend } = useApp();
   const list = useLive(async (repo) => {
-    const [events, tasks, payments, states, investments, investmentTaxes, investmentContracts, documents] = await Promise.all([repo.list('events'), repo.list('tasks'), repo.list('payments'), repo.db.notifState.toArray(), repo.list('investments'), repo.list('investmentTaxes'), repo.list('investmentContracts'), repo.list('documents')]);
-    const all = buildNotifications({ events, tasks, payments, investments, investmentTaxes, investmentContracts, documents, profile, settings: notifSettings, financeVisible: can('finance.view'), sync: { pending: syncStatus?.pending ?? 0, errors: syncStatus?.errors ?? 0, conflicts: syncStatus?.conflicts ?? 0, configured: !!backend } });
+    const [events, tasks, payments, states, investments, investmentTaxes, investmentContracts, documents, health] = await Promise.all([repo.list('events'), repo.list('tasks'), repo.list('payments'), repo.db.notifState.toArray(), repo.list('investments'), repo.list('investmentTaxes'), repo.list('investmentContracts'), repo.list('documents'), loadHealth(repo)]);
+    const all = buildNotifications({ events, tasks, payments, investments, investmentTaxes, investmentContracts, documents, health, profile, settings: notifSettings, financeVisible: can('finance.view'), sync: { pending: syncStatus?.pending ?? 0, errors: syncStatus?.errors ?? 0, conflicts: syncStatus?.conflicts ?? 0, configured: !!backend } });
     return all.filter((n) => !states.find((s) => s.key === n.key && (s.read || s.dismissed)));
   }, [profile?.id, notifSettings, syncStatus], []);
   return (

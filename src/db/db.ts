@@ -32,6 +32,12 @@ const STORES: Record<string, string> = {
   investmentContracts: `${BASE}, investmentId`,
   investmentTaxes: `${BASE}, investmentId, dueDate`,
   investmentWorks: `${BASE}, investmentId`,
+  healthNotes: `${BASE}, personId`,
+  treatments: `${BASE}, personId, status`,
+  medications: `${BASE}, treatmentId, personId, status`,
+  doseLogs: `${BASE}, medicationId, plannedAt`,
+  doctors: BASE,
+  vaccinations: `${BASE}, personId, dueDate`,
   // solo locales
   outbox: 'opId, [entity+recordId], status, createdAt',
   conflicts: 'id, recordId, resolved',
@@ -53,10 +59,11 @@ export class HogarDB extends Dexie {
 
   constructor(name = 'hogar') {
     super(name);
-    // v1: versión inicial. v2: inversiones (las tablas nuevas se agregan sin tocar los datos existentes).
-    const { investments, investmentContracts, investmentTaxes, investmentWorks, ...v1 } = STORES;
+    // v1: versión inicial. v2: inversiones. v3: salud (las tablas nuevas se agregan sin tocar los datos existentes).
+    const { investments, investmentContracts, investmentTaxes, investmentWorks, healthNotes, treatments, medications, doseLogs, doctors, vaccinations, ...v1 } = STORES;
     this.version(1).stores(v1);
     this.version(2).stores({ investments, investmentContracts, investmentTaxes, investmentWorks });
+    this.version(3).stores({ healthNotes, treatments, medications, doseLogs, doctors, vaccinations }); // v3: salud
   }
 
   entity<E extends EntityName>(name: E): Table<EntityMap[E], string> {

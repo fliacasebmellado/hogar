@@ -63,6 +63,14 @@ const RULES: Partial<Record<EntityName, Rule[]>> = {
   investmentTaxes: [required('investmentId', 'la inversión'), required('tax', 'el impuesto'), optDate('dueDate', 'El vencimiento'), optDate('paidDate', 'La fecha de pago'),
     positive('amount', 'El importe'), (r) => (r.status === 'pagado' && !r.paidDate ? 'Indicá la fecha de pago.' : null)],
   investmentWorks: [required('investmentId', 'la inversión'), required('title', 'el trabajo'), optDate('date', 'La fecha'), positive('cost', 'El costo')],
+  healthNotes: [required('title', 'el título'), optDate('date', 'La fecha')],
+  treatments: [required('personId', 'para quién es'), optDate('startDate', 'El inicio')],
+  medications: [required('treatmentId', 'el tratamiento'), required('name', 'el medicamento'), positive('everyHours', 'Cada cuántas horas'), positive('days', 'Los días'),
+    (r) => (r.everyHours != null && (r.everyHours < 1 || r.everyHours > 72) ? 'Cada cuántas horas debe estar entre 1 y 72.' : null),
+    (r) => (r.firstDose && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(r.firstDose) ? 'La primera toma necesita fecha y hora.' : null)],
+  doseLogs: [required('medicationId', 'el medicamento'), required('plannedAt', 'la hora prevista')],
+  doctors: [required('name', 'el nombre')],
+  vaccinations: [required('vaccine', 'la vacuna'), optDate('dueDate', 'La fecha'), optDate('appliedDate', 'La fecha de aplicación')],
 };
 
 export function validateRecord(entity: EntityName, record: any): string[] {

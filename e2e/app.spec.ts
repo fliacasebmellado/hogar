@@ -318,3 +318,30 @@ test('compras: agregar un rubro propio con ícono y cargar productos en él', as
   await page.getByLabel('Agregar en Mascotas').press('Enter');
   await expect(page.locator('details.rubro', { hasText: 'Mascotas' }).getByText('Collar')).toBeVisible();
 });
+
+test('salud: solo para adultos; receta escrita, horarios y cartilla', async ({ page }) => {
+  await enter(page, 'Mamá');
+  await page.goto('./#/salud');
+  await page.getByRole('button', { name: /Pegar o escribir/ }).click();
+  await page.getByLabel('Texto de la indicación').fill('Dx: Otitis\nAmoxicilina 250 mg cada 8 horas por 7 días\nIbuprofeno 5 ml si fiebre');
+  await page.getByRole('button', { name: 'Interpretar' }).click();
+  const d = page.getByRole('dialog');
+  await expect(d.getByLabel('Diagnóstico')).toHaveValue('Otitis');
+  await d.getByLabel('Para quién').selectOption({ label: 'Hija' });
+  await expect(d.getByLabel('Medicamento').first()).toHaveValue('Amoxicilina');
+  await expect(d.getByText(/21 tomas/)).toBeVisible();
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await page.getByRole('tab', { name: 'Tratamientos' }).click();
+  await expect(page.getByText('Otitis')).toBeVisible();
+  await page.getByRole('tab', { name: 'Cartilla' }).click();
+  await page.getByRole('button', { name: /Agregar médico/ }).click();
+  await page.getByRole('dialog').getByLabel('Nombre').fill('Dra. Pérez');
+  await page.getByRole('dialog').getByLabel('Teléfono').fill('11 4444-5555');
+  await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByRole('link', { name: /Llamar/ })).toHaveAttribute('href', 'tel:1144445555');
+  // Chicos y perfil Familia no la ven
+  await page.goto('./#/');
+  await page.getByRole('button', { name: 'Ver como Hijo' }).click();
+  await page.goto('./#/salud');
+  await expect(page.getByText(/no está disponible para el perfil Hijo/)).toBeVisible();
+});

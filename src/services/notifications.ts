@@ -1,6 +1,8 @@
 // Centro de notificaciones. Los avisos se DERIVAN de los datos (no se duplican registros); solo se guarda
 // localmente el estado leído/descartado por clave estable.
-import type { CalendarEvent, DocumentRecord, Investment, InvestmentContract, InvestmentTax, Payment, Profile, Task } from '../domain/types';
+import type { CalendarEvent, DocumentRecord, DoseLog, Investment, InvestmentContract, InvestmentTax, Medication, Payment, Profile, Task, Treatment, Vaccination } from '../domain/types';
+import { dosesBetween } from './health';
+import { vaccineState } from './vaccines';
 import type { NotificationSettings } from './config';
 import { addDays, diffDays, formatDate, parseISODate, today } from '../domain/dates';
 import { expandEvents } from './events';
@@ -8,7 +10,7 @@ import { formatMoney } from '../domain/finance';
 
 export type Severity = 'info' | 'warn' | 'alert';
 export interface AppNotification {
-  key: string; kind: 'evento' | 'pago' | 'tarea' | 'mantenimiento' | 'sincronizacion' | 'inversion' | 'documento'; title: string; detail: string;
+  key: string; kind: 'evento' | 'pago' | 'tarea' | 'mantenimiento' | 'sincronizacion' | 'inversion' | 'documento' | 'salud'; title: string; detail: string;
   date: string; severity: Severity; link: string;
 }
 
@@ -16,6 +18,8 @@ export interface NotificationInput {
   events: CalendarEvent[]; tasks: Task[]; payments: Payment[]; profile?: Profile; settings: NotificationSettings;
   sync: { pending: number; errors: number; conflicts: number; configured: boolean }; financeVisible: boolean; now?: Date;
   investments?: Investment[]; investmentTaxes?: InvestmentTax[]; investmentContracts?: InvestmentContract[]; documents?: DocumentRecord[];
+  /** Salud (solo se avisa a perfiles adultos). */
+  health?: { medications: Medication[]; doseLogs: DoseLog[]; treatments: Treatment[]; vaccinations: Vaccination[]; profiles: Profile[] };
 }
 
 export function buildNotifications(i: NotificationInput): AppNotification[] {
@@ -25,6 +29,25 @@ export function buildNotifications(i: NotificationInput): AppNotification[] {
   const out: AppNotification[] = [];
   if (!s.enabled) return out;
   const mine = (ids: (string | undefined)[]) => !i.profile || i.profile.role !== 'child' || ids.includes(i.profile.id);
+
+  if (i.health && i.profile?.role === 'adult') {
+    const who = (id?: string) => i.health!.profiles.find((p) => p.id === id)?.name;
+    // Tomas: atrasadas de las últimas 12 horas y las de la próxima hora.
+    for (const d of dosesBetween(i.health.medications, i.health.doseLogs, i.health.treatments, new Date(now.getTime() - 12 * 3600e3), new Date(now.getTime() + 3600e3), now)) {
+      if (d.status !== 'atrasada' && d.status !== 'proxima') continue;
+      const name = who(d.med.personId ?? d.treatment?.personId);
+      out.push({ key: `toma:${d.med.id}:${d.plannedAt}`, kind: 'salud', title: `💊 ${d.med.name}${d.med.dose ? ` ${d.med.dose}` : ''}${name ? ` · ${name}` : ''}`,
+        detail: d.status === 'atrasada' ? `Toma de las ${d.plannedAt.slice(11)} sin marcar` : `Toma a las ${d.plannedAt.slice(11)}`, date: d.plannedAt,
+        severity: d.status === 'atrasada' ? 'alert' : 'warn', link: '/salud' });
+    }
+    for (const v of i.health.vaccinations) {
+      if (v.deleted) continue;
+      const st = vaccineState(v, ref);
+      if (st !== 'toca_ahora' && !(st === 'proxima' && v.dueDate && diffDays(v.dueDate, ref) <= 30)) continue;
+      out.push({ key: `vacuna:${v.id}`, kind: 'salud', title: `💉 ${v.vaccine} · ${who(v.personId) ?? ''}`, detail: st === 'toca_ahora' ? `Le toca (${v.ageLabel ?? v.dose ?? ''})` : `Le toca el ${formatDate(v.dueDate!)}`,
+        date: v.dueDate ?? ref, severity: st === 'toca_ahora' ? 'warn' : 'info', link: '/salud?tab=vacunas' });
+    }
+  }
 
   if (s.categories.eventos) {
     for (const inst of expandEvents(i.events, ref, addDays(ref, 2))) {

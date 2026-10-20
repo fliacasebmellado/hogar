@@ -148,18 +148,43 @@ export interface InvestmentWork extends BaseRecord {
   paidBy?: string; documentId?: ID; notes?: string;
 }
 
+// ---- Salud ----
+export interface HealthNote extends BaseRecord {
+  personId?: ID; kind: string; title: string; body?: string; doctor?: string; date?: ISODate; pinned?: boolean; attachmentIds?: ID[];
+}
+export interface Treatment extends BaseRecord {
+  personId: ID; diagnosis?: string; doctor?: string; place?: string; startDate?: ISODate; status: string; notes?: string;
+  attachmentIds?: ID[]; sourceText?: string;
+}
+export interface Medication extends BaseRecord {
+  treatmentId: ID; personId?: ID; name: string; dose?: string; everyHours?: number; days?: number;
+  /** "AAAA-MM-DDTHH:mm" de la primera toma. */ firstDose?: string;
+  /** Horarios fijos del día ("08:00", "16:00"…) cuando se acomodan a mano; si no, se calcula "cada X horas". */ times?: string[];
+  asNeeded?: boolean; notes?: string; status: string;
+}
+export interface Doctor extends BaseRecord {
+  name: string; specialty?: string; personIds?: ID[]; phone?: string; whatsapp?: string; address?: string; insurance?: string; email?: string; notes?: string;
+}
+export interface Vaccination extends BaseRecord {
+  personId: ID; vaccine: string; dose?: string; ageLabel?: string; dueDate?: ISODate; status: string; appliedDate?: ISODate;
+  place?: string; lot?: string; notes?: string; scheduleId?: string;
+}
+export interface DoseLog extends BaseRecord { medicationId: ID; plannedAt: string; takenAt?: string; by?: ID; skipped?: boolean; note?: string }
+
 export interface EntityMap {
   household: Household; profiles: Profile; config: ConfigEntry; tasks: Task; events: CalendarEvent;
   shoppingLists: ShoppingList; shoppingItems: ShoppingItem; payments: Payment; expenses: Expense; rooms: Room;
   providers: Provider; assets: Asset; maintenance: Maintenance; repairs: Repair; documents: DocumentRecord;
   attachments: Attachment; notes: Note; captures: Capture; history: HistoryEntry;
   investments: Investment; investmentContracts: InvestmentContract; investmentTaxes: InvestmentTax; investmentWorks: InvestmentWork;
+  healthNotes: HealthNote; treatments: Treatment; medications: Medication; doseLogs: DoseLog; doctors: Doctor; vaccinations: Vaccination;
 }
 export type EntityName = keyof EntityMap;
 export const ENTITY_NAMES: EntityName[] = [
   'household', 'profiles', 'config', 'tasks', 'events', 'shoppingLists', 'shoppingItems', 'payments', 'expenses', 'rooms',
   'providers', 'assets', 'maintenance', 'repairs', 'documents', 'attachments', 'notes', 'captures', 'history',
   'investments', 'investmentContracts', 'investmentTaxes', 'investmentWorks',
+  'healthNotes', 'treatments', 'medications', 'doseLogs', 'doctors', 'vaccinations',
 ];
 
 // ---- Tablas solo locales ----

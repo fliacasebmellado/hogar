@@ -20,6 +20,7 @@ const Tasks = lazy(() => import('./modules/tasks/Tasks'));
 const Shopping = lazy(() => import('./modules/shopping/Shopping'));
 const Finance = lazy(() => import('./modules/finance/Finance'));
 const Investments = lazy(() => import('./modules/investments/Investments'));
+const Health = lazy(() => import('./modules/health/Health'));
 const House = lazy(() => import('./modules/house/House'));
 const Family = lazy(() => import('./modules/family/Family'));
 const Documents = lazy(() => import('./modules/documents/Documents'));
@@ -50,6 +51,7 @@ export default function App({ updateBar }: { updateBar?: ReactNode }) {
             <Route path="compras" element={<Shopping />} />
             <Route path="economia" element={<Guard mod="economia"><Finance /></Guard>} />
             <Route path="inversiones" element={<Guard mod="inversiones"><Investments /></Guard>} />
+            <Route path="salud" element={<Guard mod="salud"><Health /></Guard>} />
             <Route path="casa" element={<Guard mod="casa"><House /></Guard>} />
             <Route path="familia" element={<Family />} />
             <Route path="documentos" element={<Documents />} />

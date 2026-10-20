@@ -81,5 +81,6 @@ export const ENTITY_LABEL: Record<string, string> = {
   documents: 'Documento', repairs: 'Reparación', maintenance: 'Mantenimiento', assets: 'Elemento de la casa', rooms: 'Ambiente',
   providers: 'Proveedor', notes: 'Nota', profiles: 'Perfil', captures: 'Captura', attachments: 'Archivo', config: 'Configuración',
   household: 'Hogar', history: 'Historial', investments: 'Inversión', investmentContracts: 'Contrato', investmentTaxes: 'Impuesto',
-  investmentWorks: 'Mantenimiento de inversión',
+  investmentWorks: 'Mantenimiento de inversión', healthNotes: 'Indicación médica', treatments: 'Tratamiento', medications: 'Medicamento',
+  doseLogs: 'Toma de medicamento', doctors: 'Médico/a', vaccinations: 'Vacuna',
 };

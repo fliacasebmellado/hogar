@@ -15,6 +15,7 @@ import type { ConfigEntry, Profile } from '../domain/types';
 import { ValidationError } from '../domain/validation';
 import { DEFAULT_AI_SETTINGS, type AISettings } from '../ai/types';
 import { buildNotifications, inQuietHours } from '../services/notifications';
+import { loadHealth } from '../services/health';
 import { nowISO } from '../domain/dates';
 import { tones } from '../ui/theme';
 
@@ -152,8 +153,8 @@ export function AppProvider({ repo, children }: { repo: Repo; children: ReactNod
     if (!notifSettings.browser || typeof Notification === 'undefined') return;
     const check = async () => {
       if (Notification.permission !== 'granted' || inQuietHours(notifSettings)) return;
-      const [events, tasks, payments] = await Promise.all([repo.list('events'), repo.list('tasks'), repo.list('payments')]);
-      const list = buildNotifications({ events, tasks, payments, profile, settings: notifSettings, financeVisible: canFn(profile, 'finance.view', permissions), sync: { pending: 0, errors: 0, conflicts: 0, configured: false } });
+      const [events, tasks, payments, health] = await Promise.all([repo.list('events'), repo.list('tasks'), repo.list('payments'), loadHealth(repo)]);
+      const list = buildNotifications({ events, tasks, payments, health, profile, settings: notifSettings, financeVisible: canFn(profile, 'finance.view', permissions), sync: { pending: 0, errors: 0, conflicts: 0, configured: false } });
       for (const n of list.filter((x) => x.severity !== 'info' || x.kind === 'evento')) {
         const st = await repo.db.notifState.get(n.key);
         if (st?.notifiedAt || st?.dismissed) continue;

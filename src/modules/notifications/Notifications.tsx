@@ -4,12 +4,13 @@ import { useApp, useLive } from '../../app/context';
 import { buildNotifications, type AppNotification } from '../../services/notifications';
 import { Empty, StatusChip } from '../../ui/components';
 import type { NotificationState } from '../../domain/types';
+import { loadHealth } from '../../services/health';
 
 export default function Notifications() {
   const { repo, profile, notifSettings, can, syncStatus, backend } = useApp();
   const data = useLive(async (r) => {
-    const [events, tasks, payments, states, investments, investmentTaxes, investmentContracts, documents] = await Promise.all([r.list('events'), r.list('tasks'), r.list('payments'), r.db.notifState.toArray(), r.list('investments'), r.list('investmentTaxes'), r.list('investmentContracts'), r.list('documents')]);
-    const list = buildNotifications({ events, tasks, payments, investments, investmentTaxes, investmentContracts, documents, profile, settings: notifSettings, financeVisible: can('finance.view'), sync: { pending: syncStatus?.pending ?? 0, errors: syncStatus?.errors ?? 0, conflicts: syncStatus?.conflicts ?? 0, configured: !!backend } });
+    const [events, tasks, payments, states, investments, investmentTaxes, investmentContracts, documents, health] = await Promise.all([r.list('events'), r.list('tasks'), r.list('payments'), r.db.notifState.toArray(), r.list('investments'), r.list('investmentTaxes'), r.list('investmentContracts'), r.list('documents'), loadHealth(r)]);
+    const list = buildNotifications({ events, tasks, payments, investments, investmentTaxes, investmentContracts, documents, health, profile, settings: notifSettings, financeVisible: can('finance.view'), sync: { pending: syncStatus?.pending ?? 0, errors: syncStatus?.errors ?? 0, conflicts: syncStatus?.conflicts ?? 0, configured: !!backend } });
     return { list, states };
   }, [profile?.id, notifSettings, syncStatus], { list: [] as AppNotification[], states: [] as NotificationState[] });
   const st = (k: string) => data.states.find((s) => s.key === k);

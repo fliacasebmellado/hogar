@@ -30,11 +30,11 @@ export function tones(hex: string): Tone {
   return { base, tint: mix(hex, '#ffffff', 0.86), soft: mix(hex, '#ffffff', 0.68), ink, on: onColor(base) };
 }
 
-export type ModuleId = 'agenda' | 'tareas' | 'compras' | 'economia' | 'inversiones' | 'casa' | 'familia' | 'documentos' | 'asistente' | 'ajustes' | 'avisos';
+export type ModuleId = 'agenda' | 'tareas' | 'compras' | 'economia' | 'inversiones' | 'casa' | 'salud' | 'familia' | 'documentos' | 'asistente' | 'ajustes' | 'avisos';
 /** Colores de módulos: apagados, en la misma familia que la paleta de perfiles. */
 export const MODULE_COLOR: Record<ModuleId, string> = {
   inversiones: '#8a7a5c', agenda: '#6f87a3', tareas: '#7f9677', compras: '#c29a5b', economia: '#5c8a7d', casa: '#b07f6a',
-  familia: '#a8919d', documentos: '#8d86a6', asistente: '#626b71', ajustes: '#8a8580', avisos: '#c08a5a',
+  salud: '#b07f86', familia: '#a8919d', documentos: '#8d86a6', asistente: '#626b71', ajustes: '#8a8580', avisos: '#c08a5a',
 };
 
 const EVENT_ICON: Record<string, string> = {

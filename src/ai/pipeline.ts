@@ -115,7 +115,7 @@ export async function processCapture(repo: Repo, captureId: ID, opts: { settings
     const imgs: Blob[] = [];
     for (const id of capture.attachmentIds) {
       const att = await repo.get('attachments', id);
-      if (att?.mimeType.startsWith('image/')) { const b = await getLocalFile(repo, id); if (b) imgs.push(b); }
+      if (att && (att.mimeType.startsWith('image/') || att.mimeType === 'application/pdf')) { const b = await getLocalFile(repo, id); if (b) imgs.push(b); }
     }
     if (imgs.length) {
       try {
@@ -145,6 +145,7 @@ export async function processCapture(repo: Repo, captureId: ID, opts: { settings
           if (t.trim()) { extracted.push(t); procs.add('OCR local (Tesseract)'); } else notes.push(`No se encontró texto legible en "${att.name}".`);
         } else notes.push(`La imagen "${att.name}" se guardó, pero no se leyó su texto (lectura de imágenes desactivada).`);
       } else if (att.mimeType === 'application/pdf') {
+        if (visionProposals) continue; // ya lo leyó la IA
         if (settings.mode !== 'manual' && settings.pdfText && ex.pdf) {
           const t = await ex.pdf(blob);
           if (t.trim()) { extracted.push(t); procs.add('texto de PDF (pdf.js)'); } else notes.push(`"${att.name}" no tiene texto seleccionable (puede ser un escaneo).`);

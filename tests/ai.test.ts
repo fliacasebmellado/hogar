@@ -309,3 +309,24 @@ Médico Actuante: JUAN ROMERO`);
     expect(e.ambiguities).toHaveLength(0);
   });
 });
+
+describe('lectura con IA de lo subido (imágenes y PDF)', () => {
+  it('con la IA activada, un PDF va a la IA (no al lector local) y su respuesta queda para revisar', async () => {
+    const { createCapture, processCapture } = await import('../src/ai/pipeline');
+    const c = await createCapture(repo, { kind: 'documento', text: '', files: [{ blob: new Blob(['%PDF-1.4'], { type: 'application/pdf' }), name: 'cronograma.pdf' }], by: MAMA });
+    const pdf = vi.fn(async () => 'texto local');
+    const vision = vi.fn(async (blobs: Blob[]) => ({ model: 'gemini-x', items: [{ type: 'evento' as const, title: `Examen de Lengua (${blobs[0].type})`, date: '2026-11-19', personIds: ['profile-hijo'], personSure: true, category: 'colegio' }] }));
+    const done = await processCapture(repo, c.id, { settings: { ...DEFAULT_AI_SETTINGS, vision: true }, currentProfileId: MAMA, now: NOW, extractors: { pdf, vision } });
+    expect(vision).toHaveBeenCalledTimes(1);
+    expect(pdf).not.toHaveBeenCalled();
+    const ev = done.proposals.find((p) => p.kind === 'evento')!;
+    expect(ev.fields).toMatchObject({ title: 'Examen de Lengua (application/pdf)', start: '2026-11-19', participantIds: ['profile-hijo'] });
+  });
+  it('si la IA falla, se lee con el sistema local y se avisa', async () => {
+    const { createCapture, processCapture, captureNotes } = await import('../src/ai/pipeline');
+    const c = await createCapture(repo, { kind: 'imagen', text: 'Mañana a las 18 reunión de padres', files: [{ blob: new Blob(['x'], { type: 'image/png' }), name: 'cap.png' }], by: MAMA });
+    const done = await processCapture(repo, c.id, { settings: { ...DEFAULT_AI_SETTINGS, vision: true, ocr: false }, currentProfileId: MAMA, now: NOW, extractors: { vision: async () => { throw new Error('sin conexión'); } } });
+    expect(done.proposals.some((p) => p.kind === 'evento')).toBe(true);
+    expect((await captureNotes(repo, c.id)).join(' ')).toMatch(/No se pudo usar la IA \(sin conexión\)/);
+  });
+});

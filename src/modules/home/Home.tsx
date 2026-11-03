@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { HeartPulse, ChevronDown, Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
+import { ImageUp, HeartPulse, ChevronDown, Type, Camera, Mic, ShoppingCart, Inbox, CheckSquare, CalendarDays, Wallet, Wrench, FileText, Users, Settings2, Building2 } from 'lucide-react';
 import { useApp, useLive } from '../../app/context';
 import type { CalendarEvent, Capture, InvestmentTax, Payment, Profile, Repair, ShoppingItem, Task } from '../../domain/types';
 import { addDays, diffDays, formatDate, formatDateTimeHuman, relativeDay, today } from '../../domain/dates';
@@ -46,12 +46,14 @@ function QuickCircle({ to, label, Icon, onClick }: { to?: string; label: string;
   return to ? <Link to={to}>{inner}</Link> : <button type="button" onClick={onClick}>{inner}</button>;
 }
 
-/** "Foto": abre la cámara del celular en el mismo toque (en computadora, el selector de archivos). */
-function CameraCircle({ onPhotos }: { onPhotos: (f: File[]) => void }) {
+/** "Foto" abre la cámara; "Subir" (upload) abre la galería o los archivos del celular (imágenes o PDF). */
+function CameraCircle({ onPhotos, upload }: { onPhotos: (f: File[]) => void; upload?: boolean }) {
   return (
-    <label className="quick-camera" aria-label="Foto: abrir la cámara">
-      <span className="circle"><Camera size={24} strokeWidth={2.2} /></span><span className="lbl">Foto</span>
-      <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />
+    <label className="quick-camera" aria-label={upload ? 'Subir: elegir una imagen o PDF del celular' : 'Foto: abrir la cámara'}>
+      <span className="circle">{upload ? <ImageUp size={24} strokeWidth={2.2} /> : <Camera size={24} strokeWidth={2.2} />}</span><span className="lbl">{upload ? 'Subir' : 'Foto'}</span>
+      {upload
+        ? <input type="file" accept="image/*,application/pdf" multiple className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />
+        : <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) onPhotos(f); }} />}
     </label>
   );
 }
@@ -212,7 +214,7 @@ export default function Home() {
         <CameraCircle onPhotos={(f) => { setPendingPhotos(f); nav('/asistente?modo=foto'); }} />
         <QuickCircle to="/asistente?modo=voz" label="Voz" Icon={Mic} />
         {isChild ? <QuickCircle label="Pedir algo" Icon={ShoppingCart} onClick={() => setAsk(true)} />
-          : <QuickCircle to="/compras" label="Compras" Icon={ShoppingCart} />}
+          : <CameraCircle upload onPhotos={(f) => { setPendingPhotos(f); nav('/asistente?modo=foto'); }} />}
       </div>
 
       {isChild && (

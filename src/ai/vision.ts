@@ -25,6 +25,15 @@ export async function imageForVision(blob: Blob, max = 1600): Promise<{ mime: st
   return { mime: 'image/jpeg', base64: url.slice(url.indexOf(',') + 1) };
 }
 
+/** Un PDF se manda tal cual (Gemini lee PDF). Límite de 8 MB para no pasar los topes del backend. */
+export async function pdfForVision(blob: Blob): Promise<{ mime: string; base64: string }> {
+  if (blob.size > 8 * 1024 * 1024) throw new Error('El PDF es muy grande para la IA (máx. 8 MB).');
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return { mime: 'application/pdf', base64: btoa(bin) };
+}
+
 export function visionContext(ctx: InterpretContext) {
   const cur = ctx.profiles.find((p) => p.id === ctx.currentProfileId);
   return {

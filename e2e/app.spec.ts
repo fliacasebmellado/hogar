@@ -283,7 +283,7 @@ test('botón Foto de Inicio: abre la cámara, se elige el destino y se revisa', 
     const b: Blob = await new Promise((r) => c.toBlob((bb) => r(bb!), 'image/png'));
     return Array.from(new Uint8Array(await b.arrayBuffer()));
   });
-  await page.locator('label.quick-camera input[type=file]').setInputFiles({ name: 'repuesto.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+  await page.getByLabel('Foto: abrir la cámara').setInputFiles({ name: 'repuesto.png', mimeType: 'image/png', buffer: Buffer.from(png) });
   await expect(page).toHaveURL(/modo=foto/);
   await expect(page.getByRole('img', { name: 'Foto 1' })).toBeVisible();
   await page.getByRole('button', { name: /Compras/ }).click();
@@ -356,4 +356,13 @@ test('salud: solo para adultos; receta escrita, horarios y cartilla', async ({ p
   await page.getByRole('button', { name: 'Ver como Hijo' }).click();
   await page.goto('./#/salud');
   await expect(page.getByText(/no está disponible para el perfil Hijo/)).toBeVisible();
+});
+
+test('botón Subir de Inicio: elige un archivo del celular (sin cámara) y lo lleva a revisar', async ({ page }) => {
+  await enter(page, 'Mamá');
+  const input = page.getByLabel('Subir: elegir una imagen o PDF del celular');
+  await expect(input).not.toHaveAttribute('capture', /.*/);
+  await input.setInputFiles({ name: 'cronograma.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 prueba') });
+  await expect(page).toHaveURL(/modo=foto/);
+  await expect(page.getByText('cronograma.pdf')).toBeVisible();
 });

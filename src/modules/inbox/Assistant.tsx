@@ -17,7 +17,7 @@ import { ReviewSheet } from './ReviewSheet';
 import { GmailImportSheet } from './GmailImport';
 import { HttpTransport } from '../../sync/transport';
 import { api, importFormResponses } from '../../integrations/google';
-import { imageForVision, visionContext } from '../../ai/vision';
+import { imageForVision, pdfForVision, visionContext } from '../../ai/vision';
 import type { InterpretContext } from '../../ai/types';
 
 type Tab = 'capturar' | 'revisar' | 'historial';
@@ -145,7 +145,7 @@ export default function Assistant() {
     if (!ai.vision || !backend || !navigator.onLine) return undefined;
     const t = new HttpTransport(backend.url, backend.token);
     return async (imgs: Blob[], text: string, ctx: InterpretContext) =>
-      api.visionInterpret(t, { images: await Promise.all(imgs.slice(0, 4).map((b) => imageForVision(b))), text, context: visionContext(ctx) });
+      api.visionInterpret(t, { images: await Promise.all(imgs.slice(0, 4).map((b) => (b.type === 'application/pdf' ? pdfForVision(b) : imageForVision(b)))), text, context: visionContext(ctx) });
   }
 
   return (
@@ -156,6 +156,9 @@ export default function Assistant() {
 
       {tab === 'capturar' && mode === 'foto' && (
         <div className="stack">
+          {(!ai.vision || !backend) && (
+            <Banner tone="warn">{!backend ? 'Para leer con IA, la app tiene que estar conectada con Google.' : <>La lectura con IA está apagada: se va a leer con el sistema local (menos preciso con tablas y tarjetas). <Link to="/ajustes/asistente">Activarla en Ajustes → Asistente</Link></>}</Banner>
+          )}
           <PhotoMode files={files} onAddPhotos={addFiles} onRemove={(i) => setFiles((x) => x.filter((_, k) => k !== i))} dest={dest} setDest={setDest}
             text={text} setText={setText} busy={!!busy} onSubmit={() => interpretCore({ text, files, transcript: '', dest })} />
           {busy && <div className="banner banner-info" role="status"><div style={{ flex: 1 }}>{busy}</div></div>}

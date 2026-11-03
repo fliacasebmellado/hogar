@@ -8,6 +8,7 @@ import type { AISettings, ExistingIndex, InterpretContext, Proposal } from './ty
 import { DEFAULT_AI_SETTINGS } from './types';
 import { buildProposalsFromText, base, billProposal, docCategoryFromText, looksLikeBill } from './rules';
 import { blockingIssues, finalizeProposal } from './finalize';
+import { proposalsFromVision, type VisionResult } from './vision';
 import { llmInterpret } from './llm';
 import { storeFile, getLocalFile } from '../services/files';
 import { captureFolder } from '../services/folders';
@@ -59,7 +60,7 @@ export async function buildContext(repo: Repo, currentProfileId?: string, now = 
   const profiles = await repo.list('profiles');
   return {
     now, currentProfileId,
-    profiles: profiles.map((p) => ({ id: p.id, name: p.name, role: p.role, aliases: p.aliases ?? [], active: p.active })),
+    profiles: profiles.map((p) => ({ id: p.id, name: p.name, role: p.role, aliases: p.aliases ?? [], active: p.active, school: p.school })),
     existing: await buildExistingIndex(repo),
   };
 }
@@ -92,6 +93,8 @@ export interface Extractors {
   ocr?: (blob: Blob) => Promise<string>;
   pdf?: (blob: Blob) => Promise<string>;
   transcribe?: (blob: Blob) => Promise<string>;
+  /** Lectura con IA (Gemini vía backend) de imágenes + texto. Si falla, se sigue con OCR y reglas locales. */
+  vision?: (images: Blob[], text: string, ctx: InterpretContext) => Promise<VisionResult>;
   onProgress?: (msg: string) => void;
 }
 
@@ -105,6 +108,28 @@ export async function processCapture(repo: Repo, captureId: ID, opts: { settings
   const extracted: string[] = [];
   const attachments: Attachment[] = [];
   const procs = new Set<string>();
+  // 1) Con la IA activada, las imágenes (y el texto que las acompaña) se leen enteras con Gemini: entiende tablas,
+  //    tarjetas y capturas mucho mejor que el OCR por renglones. Si no hay conexión o falla, se usa el camino de siempre.
+  let visionProposals: Proposal[] | null = null;
+  if (settings.vision && settings.mode !== 'manual' && ex.vision) {
+    const imgs: Blob[] = [];
+    for (const id of capture.attachmentIds) {
+      const att = await repo.get('attachments', id);
+      if (att?.mimeType.startsWith('image/')) { const b = await getLocalFile(repo, id); if (b) imgs.push(b); }
+    }
+    if (imgs.length) {
+      try {
+        ex.onProgress?.('Leyendo con IA…');
+        const vctx = await buildContext(repo, opts.currentProfileId, opts.now);
+        const res = await ex.vision(imgs, capture.text ?? '', vctx);
+        visionProposals = proposalsFromVision(res, vctx, capture.text ?? '').map((p) => finalizeProposal(p, vctx.existing));
+        procs.add(`IA (${res.model ?? 'Gemini'})`);
+        if (!visionProposals.length) notes.push('La IA no encontró nada para agendar en la imagen.');
+      } catch (e: any) {
+        notes.push(`No se pudo usar la IA (${e?.message ?? e}). Se leyó con el sistema local.`);
+      }
+    }
+  }
   for (const id of capture.attachmentIds) {
     const att = await repo.get('attachments', id);
     if (!att) continue;
@@ -113,6 +138,7 @@ export async function processCapture(repo: Repo, captureId: ID, opts: { settings
     if (!blob) { notes.push(`"${att.name}" no está disponible en este dispositivo.`); continue; }
     try {
       if (att.mimeType.startsWith('image/')) {
+        if (visionProposals) continue; // ya la leyó la IA
         if (settings.mode !== 'manual' && settings.ocr && ex.ocr) {
           ex.onProgress?.(`Leyendo texto de ${att.name}…`);
           const t = await ex.ocr(blob);
@@ -139,8 +165,8 @@ export async function processCapture(repo: Repo, captureId: ID, opts: { settings
   const ctx = await buildContext(repo, opts.currentProfileId, opts.now);
   // Las facturas leídas de archivos se interpretan como un único pago; el resto del texto, por fragmentos.
   const bills = settings.mode === 'manual' ? [] : extracted.filter(looksLikeBill);
-  const rest = [capture.text ?? '', ...extracted.filter((t) => !bills.includes(t))].filter(Boolean).join('\n');
-  const result = rest.trim() ? await interpretText(rest, ctx, settings) : { proposals: [], processor: 'reglas locales', notes: [] as string[] };
+  const rest = visionProposals ? '' : [capture.text ?? '', ...extracted.filter((t) => !bills.includes(t))].filter(Boolean).join('\n');
+  const result = visionProposals ? { proposals: visionProposals, processor: 'IA', notes: [] as string[] } : rest.trim() ? await interpretText(rest, ctx, settings) : { proposals: [], processor: 'reglas locales', notes: [] as string[] };
   notes.push(...result.notes);
   const proposals = [...result.proposals, ...bills.map((b) => finalizeProposal(billProposal(b, ctx), ctx.existing))];
 
@@ -318,7 +344,8 @@ export function resolveAmbiguity(p: Proposal, index: number, value: any): Propos
   else if (a.field === 'responsible') {
     if (kind === 'tarea') fields.assigneeId = value; else if (kind === 'evento') fields.ownerId = value;
     else if (kind === 'reparacion') fields.taskAssigneeId = value; else fields.responsibleId = value;
-  } else if (a.field === 'kind') kind = value;
+  } else if (a.field === 'participants') { fields.participantIds = [value]; fields.ownerId = value; }
+  else if (a.field === 'kind') kind = value;
   else if (a.field === 'category') fields.category = value;
   const ambiguities = p.ambiguities.map((x, i) => (i === index ? { ...x, resolved: true } : x));
   return { ...p, kind, fields, ambiguities };

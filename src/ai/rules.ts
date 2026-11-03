@@ -376,7 +376,30 @@ export function buildProposalsFromText(text: string, ctx: InterpretContext): Pro
     p.missing = [...new Set([...p.missing, ...missing])];
     proposals.push(p);
   }
-  return proposals;
+  return tidyNoise(proposals, groupId);
+}
+
+/** ¿Es basura de la lectura de una imagen ("—_— —Uu Y.", "7 o y x MUNDO * No : Ne")? */
+export function looksLikeNoise(s: string): boolean {
+  const t = s.trim();
+  const letters = (t.match(/[a-záéíóúñü]/gi) ?? []).length;
+  const words = t.split(/\s+/).filter((w) => /^[a-záéíóúñü]{3,}$/i.test(w.replace(/[.,;:!?¡¿()"']/g, '')));
+  return t.length < 4 || letters / Math.max(1, t.length) < 0.55 || words.length < 2;
+}
+
+/**
+ * Menos ruido al revisar: se descartan los fragmentos sin acción que son basura, y los demás sin acción se juntan en
+ * una sola nota (sin marcar) en lugar de una tarjeta por renglón.
+ */
+export function tidyNoise(list: Proposal[], groupId?: string): Proposal[] {
+  const keep = list.filter((p) => p.kind !== 'otro');
+  const rest = list.filter((p) => p.kind === 'otro' && !looksLikeNoise(p.sourceText));
+  if (rest.length <= 1) return [...keep, ...rest];
+  const body = rest.map((p) => p.sourceText.trim()).join('\n');
+  const n = base('nota', 'informacion', body, { title: 'Texto sin acción detectada', body, personIds: [] }, null, groupId);
+  n.include = false;
+  n.warnings.push(`${rest.length} renglones sin una acción clara se juntaron acá. Si alguno importa, cambiá el tipo o guardalo como nota.`);
+  return [...keep, n];
 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

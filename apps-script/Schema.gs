@@ -354,6 +354,11 @@ var SCHEMA = {
         "notes",
         "string",
         "Notas"
+      ],
+      [
+        "school",
+        "string",
+        "Curso / grado"
       ]
     ],
     "config": [

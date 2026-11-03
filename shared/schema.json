@@ -115,7 +115,8 @@
       ["prefs", "json", "Preferencias"],
       ["pinHash", "string", "PIN (hash)"],
       ["birthDate", "string", "Cumpleaños"],
-      ["notes", "string", "Notas"]
+      ["notes", "string", "Notas"],
+      ["school", "string", "Curso / grado"]
     ],
     "config": [
       ["key", "string", "Clave"],

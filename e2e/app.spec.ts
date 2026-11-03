@@ -59,7 +59,10 @@ test('crear una tarea desde el formulario y conservarla al recargar', async ({ p
 test('asistente: interpretar, aclarar, confirmar y ver los registros en cada módulo', async ({ page }) => {
   await enter(page, 'Mamá');
   await page.goto('./#/asistente');
-  await page.getByLabel(/Escribí, pegá un mensaje/).fill('Mañana a las 18 reunión de padres. Hay que comprar leche y pan. El 20 vence la luz $45.000. Turno pediatra Hija el 15/10 a las 5');
+  // Fecha del turno relativa a hoy (para que la prueba no dependa del día en que se corre).
+  const t = new Date(Date.now() + 10 * 864e5);
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  await page.getByLabel(/Escribí, pegá un mensaje/).fill(`Mañana a las 18 reunión de padres. Hay que comprar leche y pan. El 20 vence la luz $45.000. Turno pediatra Hija el ${t.getDate()}/${t.getMonth() + 1} a las 5`);
   await page.getByRole('button', { name: 'Interpretar' }).click();
   const review = page.getByRole('dialog', { name: 'Revisar antes de guardar' });
   await expect(review).toBeVisible();
@@ -78,10 +81,12 @@ test('asistente: interpretar, aclarar, confirmar y ver los registros en cada mó
   await page.locator('summary', { hasText: 'Supermercado' }).click();
   await expect(page.getByText('Leche', { exact: true })).toBeVisible();
   await page.goto('./#/economia');
+  await page.getByRole('tab', { name: 'Pagos' }).click(); // (no depende de si vence dentro de los próximos 15 días)
   await expect(page.getByText('Luz', { exact: true })).toBeVisible();
   await page.goto('./#/agenda');
   await page.getByRole('tab', { name: 'Mes' }).click();
-  await page.getByRole('gridcell', { name: /15 de octubre/ }).click();
+  if (t.getMonth() !== new Date().getMonth()) await page.getByRole('button', { name: 'Mes siguiente' }).click();
+  await page.getByRole('gridcell', { name: new RegExp(`(^|[^0-9])${t.getDate()} de ${MESES[t.getMonth()]}`) }).first().click();
   await expect(page.locator('.ev-title', { hasText: 'Turno pediatra Hija' })).toBeVisible();
 });
 

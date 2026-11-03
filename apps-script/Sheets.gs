@@ -230,6 +230,11 @@ function assertSchemaOk_(entity) {
   if (!sh) { validateSheets_(true); sh = sheetOf_(entity); }
   if (!sh) throw err_('Falta la pestaña "' + pl.tab + '". Ejecutá inicializar().', 'schema');
   var cols = columns_(entity), labels = labels_(entity);
+  // Columnas nuevas agregadas al final por una versión más reciente: se agregan solas (las existentes no se tocan).
+  var head0 = sh.getRange(1, 1, 1, Math.min(cols.length, sh.getMaxColumns())).getValues()[0].map(String);
+  if (sh.getMaxColumns() < cols.length || head0.length < cols.length || head0.some(function (h, i) { return h === '' && i >= SCHEMA.systemFields.length; })) {
+    validateSheets_(true); sh = sheetOf_(entity);
+  }
   if (sh.getMaxColumns() < cols.length) throw err_('La pestaña "' + pl.tab + '" tiene menos columnas que las esperadas. Ejecutá inicializar().', 'schema');
   var header = sh.getRange(1, 1, 1, cols.length).getValues()[0].map(String);
   for (var i = 0; i < cols.length; i++) {

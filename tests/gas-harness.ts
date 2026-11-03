@@ -244,6 +244,8 @@ export function createGasServer(opts: { token?: string } = {}): GasServer {
       newBlob: (bytes: number[], mime: string, name: string) => new FakeBlob(toBuf(bytes), mime, name),
       formatDate,
     },
+    // Gemini simulado: devuelve lo que la prueba deje en ctx.__gemini (y guarda el último pedido en ctx.__geminiReq).
+    UrlFetchApp: { fetch: (url: string, opts: any) => { ctx.__geminiReq = { url, opts }; const r = ctx.__gemini ?? { code: 200, body: { candidates: [] } }; return { getResponseCode: () => r.code, getContentText: () => JSON.stringify(r.body) }; } },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'la cuenta de Google de la familia' }), getScriptTimeZone: () => 'America/Argentina/Buenos_Aires' },
     ScriptApp: {
       getProjectTriggers: () => triggers.map((t) => ({ getHandlerFunction: () => t.fn, getTriggerSourceId: () => t.src })),

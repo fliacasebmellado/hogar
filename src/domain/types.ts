@@ -43,6 +43,7 @@ export interface ProfilePrefs {
 export interface Profile extends BaseRecord {
   name: string; role: Role; color: string; avatar: string; active: boolean;
   aliases: string[]; prefs: ProfilePrefs; pinHash?: string; birthDate?: ISODate; notes?: string;
+  /** Curso, grado o división en el colegio ("Form VI, 6.° A"): sirve para leer cronogramas de exámenes. */ school?: string;
 }
 export interface Household extends BaseRecord { name: string; timezone: string; currency: string; email: string }
 export interface ConfigEntry extends BaseRecord { key: string; value: any }

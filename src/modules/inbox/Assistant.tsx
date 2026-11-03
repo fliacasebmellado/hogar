@@ -16,7 +16,9 @@ import { guessMime } from '../../domain/validation';
 import { ReviewSheet } from './ReviewSheet';
 import { GmailImportSheet } from './GmailImport';
 import { HttpTransport } from '../../sync/transport';
-import { importFormResponses } from '../../integrations/google';
+import { api, importFormResponses } from '../../integrations/google';
+import { imageForVision, visionContext } from '../../ai/vision';
+import type { InterpretContext } from '../../ai/types';
 
 type Tab = 'capturar' | 'revisar' | 'historial';
 const STATUS_LABEL: Record<string, string> = { pendiente: 'Sin interpretar', en_revision: 'Por revisar', procesada: 'Procesada', cancelada: 'Cancelada' };
@@ -122,7 +124,7 @@ export default function Assistant() {
     const settings = dest === 'auto' || dest === 'pago' || dest === 'gasto' || dest === 'documento' || dest === 'evento' ? ai : { ...ai, ocr: false };
     const processed = await run(() => processCapture(repo, c.id, {
       settings, currentProfileId: profile?.id,
-      extractors: { ocr: (b) => ocrImage(b, (m) => setBusy(m)), pdf: extractPdfText, transcribe: (b) => transcribeWithWhisper(b, (m) => setBusy(m)), onProgress: setBusy },
+      extractors: { ocr: (b) => ocrImage(b, (m) => setBusy(m)), pdf: extractPdfText, transcribe: (b) => transcribeWithWhisper(b, (m) => setBusy(m)), vision: visionExtractor(), onProgress: setBusy },
     }));
     setBusy(null);
     if (cancelled.current) { await cancelCapture(repo, c.id, profile?.id); toast('Captura cancelada. No se guardó ningún registro.'); return; }
@@ -132,12 +134,19 @@ export default function Assistant() {
 
   const reprocess = async (c: Capture) => {
     setBusy('Interpretando…');
-    const ok = await run(() => processCapture(repo, c.id, { settings: ai, currentProfileId: profile?.id, extractors: { ocr: (b) => ocrImage(b, (m) => setBusy(m)), pdf: extractPdfText, transcribe: (b) => transcribeWithWhisper(b, (m) => setBusy(m)) } }));
+    const ok = await run(() => processCapture(repo, c.id, { settings: ai, currentProfileId: profile?.id, extractors: { ocr: (b) => ocrImage(b, (m) => setBusy(m)), pdf: extractPdfText, transcribe: (b) => transcribeWithWhisper(b, (m) => setBusy(m)), vision: visionExtractor(), onProgress: setBusy } }));
     setBusy(null);
     if (ok) setReviewId(c.id);
   };
 
   const transport = backend ? new HttpTransport(backend.url, backend.token) : null;
+  /** Lectura con IA (solo si está activada en Ajustes, hay conexión y Google está conectado). */
+  function visionExtractor() {
+    if (!ai.vision || !backend || !navigator.onLine) return undefined;
+    const t = new HttpTransport(backend.url, backend.token);
+    return async (imgs: Blob[], text: string, ctx: InterpretContext) =>
+      api.visionInterpret(t, { images: await Promise.all(imgs.slice(0, 4).map((b) => imageForVision(b))), text, context: visionContext(ctx) });
+  }
 
   return (
     <div>

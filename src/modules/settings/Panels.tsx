@@ -9,6 +9,8 @@ import { CAPABILITY_LABEL, DEFAULT_PERMISSIONS, type Capability, type Permission
 import { setConfig, type NotificationSettings } from '../../services/config';
 import { DEFAULT_AI_SETTINGS, type AISettings } from '../../ai/types';
 import { speechRecognitionAvailable } from '../../ai/processors';
+import { HttpTransport } from '../../sync/transport';
+import { api } from '../../integrations/google';
 import { loadDemo, countDemo } from '../../services/demo';
 import { ENTITY_NAMES } from '../../domain/types';
 import { formatDateTimeHuman } from '../../domain/dates';
@@ -149,6 +151,7 @@ export function AssistantPanel() {
         <Checkbox label="Dictado por voz del navegador" checked={s.speech} onChange={(v) => setS({ ...s, speech: v })}
           hint={speechRecognitionAvailable() ? 'en Chrome/Android el audio lo procesa Google para transcribir' : 'este navegador no lo admite'} />
         <Checkbox label="Transcribir audios en el dispositivo (Whisper, experimental)" checked={s.whisper} onChange={(v) => setS({ ...s, whisper: v })} hint="descarga ~80 MB la primera vez; puede ser lento en celulares" />
+        <VisionSettings value={s.vision} onChange={(v) => setS({ ...s, vision: v })} />
         <details className="more"><summary>Modelo de lenguaje local (opcional, avanzado)</summary>
           <div className="form" style={{ marginTop: 8 }}>
             <p className="small muted">Para quienes tengan un servidor local gratuito como Ollama en la red de la casa. No se usan servicios pagos ni claves. Requiere permitir el origen de la app (OLLAMA_ORIGINS) y, desde una app con HTTPS, un acceso HTTPS al servidor.</p>
@@ -164,6 +167,37 @@ export function AssistantPanel() {
         </div>
       </div>
       <Banner tone="info">Ningún modo guarda datos sin tu confirmación. Las reglas locales entienden fechas ("mañana", "el martes", "15/10"), horas, importes en pesos y dólares, integrantes y repeticiones; lo que no entienden queda marcado para completar.</Banner>
+    </div>
+  );
+}
+
+/** Lectura de imágenes con IA (Gemini). La clave va directo al backend de la familia: nunca se guarda en la app. */
+function VisionSettings({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  const { backend, run, toast, online } = useApp();
+  const [status, setStatus] = useState<{ configured: boolean; model: string } | null>(null);
+  const [key, setKey] = useState('');
+  const t = backend ? new HttpTransport(backend.url, backend.token) : null;
+  const [unavailable, setUnavailable] = useState(false);
+  useEffect(() => { if (t && online) api.visionStatus(t).then((r) => { setStatus(r); setUnavailable(false); }, () => setUnavailable(true)); }, [backend?.url, online]);
+  const saveKey = async () => {
+    if (!t) return;
+    const r = await run(() => api.setGeminiKey(t, key.trim()), key.trim() ? 'Clave guardada en el backend de Google de la familia' : 'Clave quitada');
+    if (r) { setStatus(r); setKey(''); if (r.configured && !value) onChange(true); }
+  };
+  return (
+    <div className="vision-box stack-sm">
+      <Checkbox label="Leer imágenes con IA (Gemini, gratis)" checked={value} onChange={(v) => { if (v && !status?.configured) toast('Primero cargá la clave de Gemini (abajo).', { tone: 'error' }); onChange(v); }}
+        hint="Entiende tablas del colegio, invitaciones de cumpleaños y capturas de turnos mucho mejor que la lectura local. Necesita conexión." />
+      {!backend ? <p className="small muted">Conectá la app con Google para usar esta opción.</p> : (
+        <>
+          <p className="small">{unavailable ? '⏳ El backend de Google todavía no tiene esta función: falta autorizarla y publicarla.' : !online ? 'Sin conexión.' : status === null ? 'Consultando…' : status.configured ? <>✅ Clave cargada · modelo {status.model}</> : '⚠️ Todavía no hay clave cargada.'}</p>
+          <div className="row">
+            <input className="input" type="password" autoComplete="off" placeholder={status?.configured ? 'Reemplazar clave…' : 'Pegá la clave de Gemini'} aria-label="Clave de Gemini" value={key} onChange={(e) => setKey(e.target.value)} />
+            <button className="btn" onClick={saveKey} disabled={!key.trim() && !status?.configured}>{key.trim() || !status?.configured ? 'Guardar clave' : 'Quitar'}</button>
+          </div>
+          <p className="tiny muted">La clave se guarda solo en el backend de Google de la familia (no en este celular ni en el código). En el nivel gratuito, Google puede usar lo que se envía para mejorar sus productos. Las recetas de Salud nunca se mandan a la IA: se leen siempre en el celular.</p>
+        </>
+      )}
     </div>
   );
 }

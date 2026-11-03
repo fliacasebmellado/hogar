@@ -43,6 +43,9 @@ export const api = {
   gmailAttachment: (t: Transport, id: string, index: number) => t.call<{ name: string; mimeType: string; base64: string }>('gmailAttachment', { id, index }),
   formsPending: (t: Transport) => t.call<{ key: string; form: string; submittedAt: string; answers: Record<string, string> }[]>('formsPending'),
   formsAck: (t: Transport, keys: string[]) => t.call<{ acknowledged: number }>('formsAck', { keys }),
+  visionStatus: (t: Transport) => t.call<{ configured: boolean; model: string }>('visionStatus'),
+  setGeminiKey: (t: Transport, key: string) => t.call<{ configured: boolean; model: string }>('setGeminiKey', { key }),
+  visionInterpret: (t: Transport, payload: { images: { mime: string; base64: string }[]; text: string; context: any }) => t.call<import('../ai/vision').VisionResult>('visionInterpret', payload),
   investmentFiles: (t: Transport, investmentId: string) => t.call<{ files: DriveFileInfo[]; folderUrl: string }>('investmentFiles', { investmentId }),
 };
 

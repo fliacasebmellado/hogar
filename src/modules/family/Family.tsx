@@ -147,6 +147,7 @@ function ProfileSheet({ open, profile: target, onClose }: { open: boolean; profi
         </div>
         <TextField label="Otros nombres (para el asistente)" value={aliases} onChange={setAliases} hint="Separados por coma. Ej.: papi, un apodo" />
         <DateField label="Cumpleaños (opcional)" value={d.birthDate} onChange={(v) => setD({ ...d, birthDate: v })} />
+        {d.role === 'child' && <TextField label="Curso / grado en el colegio" value={d.school} onChange={(v) => setD({ ...d, school: v })} hint="Como figura en los cronogramas. Si tiene varios nombres, separalos con coma. Ej.: Form VI, 6.° A" />}
         <h3>Visualización</h3>
         <Checkbox label="Vista simple (recomendada para chicos)" checked={!!prefs.simpleMode} onChange={(v) => setPrefs({ simpleMode: v })} />
         <NumberField label="Aviso de eventos (minutos antes)" value={prefs.notifyLeadMinutes} onChange={(v) => setPrefs({ notifyLeadMinutes: v })} />

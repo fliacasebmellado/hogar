@@ -34,6 +34,9 @@ var ACTIONS = {
   ids: function () { return ids_(); },
   syncInvestments: function () { return syncInvestmentFolders_(); },
   investmentFiles: function (req) { return investmentFiles_(req); },
+  visionStatus: function () { return visionStatus_(); },
+  setGeminiKey: function (req) { return setGeminiKey_(req); },
+  visionInterpret: function (req) { return visionInterpret_(req); },
 };
 
 function doPost(e) {
@@ -179,6 +182,7 @@ function status_() {
     calendarId: p.getProperty('CALENDAR_ID') || 'primary',
     calendarAuto: p.getProperty('CALENDAR_AUTO') === 'true',
     owner: ownerEmail_(),
+    vision: visionStatus_(),
   };
 }
 

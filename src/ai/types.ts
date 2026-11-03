@@ -26,10 +26,11 @@ export interface AISettings {
   pdfText: boolean; // pdf.js en el dispositivo
   speech: boolean; // Web Speech API del navegador (en Chrome el audio lo procesa Google)
   whisper: boolean; // Whisper local con transformers.js (descarga ~80 MB la primera vez)
+  vision: boolean; // leer imágenes con IA (Gemini, vía el backend de la familia; clave solo en el backend)
   llm: { enabled: boolean; endpoint: string; model: string }; // modelo local compatible con OpenAI (p. ej. Ollama)
 }
 export const DEFAULT_AI_SETTINGS: AISettings = {
-  mode: 'reglas', ocr: true, pdfText: true, speech: false, whisper: false,
+  mode: 'reglas', ocr: true, pdfText: true, speech: false, whisper: false, vision: false,
   llm: { enabled: false, endpoint: 'http://localhost:11434/v1/chat/completions', model: 'llama3.2' },
 };
 
@@ -56,7 +57,7 @@ export interface Proposal {
 export interface InterpretContext {
   now: Date;
   currentProfileId?: string;
-  profiles: { id: string; name: string; role: 'adult' | 'child' | 'family'; aliases: string[]; active: boolean }[];
+  profiles: { id: string; name: string; role: 'adult' | 'child' | 'family'; aliases: string[]; active: boolean; school?: string }[];
   existing: ExistingIndex;
   attachmentKinds?: ('imagen' | 'documento' | 'audio')[];
   fileNames?: string[];

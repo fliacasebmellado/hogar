@@ -731,3 +731,5 @@ details.rubro > .card { border-top-left-radius: 0; border-top-right-radius: 0; }
 .ficha-grid dd { margin: 0; word-break: break-word; }
 .vision-box { padding: 14px; border-radius: 16px; background: var(--surface-2); }
 .vision-box .input { background: var(--surface); }
+
+.push-topic{flex:1;min-width:0;padding:8px 10px;border-radius:10px;background:var(--surface-2,#f4f4f4);font-size:15px;word-break:break-all;user-select:all}

@@ -27,6 +27,8 @@ export interface ExternalEvent { googleEventId: string; title: string; location:
 
 export interface DriveFileInfo { id: string; name: string; mimeType: string; url: string; path: string; updatedAt: string }
 
+export interface PushInfo { topic: string; enabled: boolean; server: string }
+
 export const api = {
   ping: (t: Transport) => t.call<{ pong: boolean; schemaVersion: number; time: string }>('ping'),
   setup: (t: Transport) => t.call<{ spreadsheetUrl: string; rootFolderUrl: string; sheets: BackendStatus['sheets'] }>('setup'),
@@ -46,6 +48,9 @@ export const api = {
   visionStatus: (t: Transport) => t.call<{ configured: boolean; model: string }>('visionStatus'),
   setGeminiKey: (t: Transport, key: string) => t.call<{ configured: boolean; model: string }>('setGeminiKey', { key }),
   visionInterpret: (t: Transport, payload: { images: { mime: string; base64: string }[]; text: string; context: any }) => t.call<import('../ai/vision').VisionResult>('visionInterpret', payload),
+  pushStatus: (t: Transport, profileId: string, appUrl: string) => t.call<PushInfo>('pushStatus', { profileId, appUrl }),
+  pushSet: (t: Transport, profileId: string, patch: { enabled?: boolean; newTopic?: boolean }) => t.call<PushInfo>('pushSet', { profileId, ...patch }),
+  pushTest: (t: Transport, profileId: string) => t.call<{ sent: boolean }>('pushTest', { profileId }),
   investmentFiles: (t: Transport, investmentId: string) => t.call<{ files: DriveFileInfo[]; folderUrl: string }>('investmentFiles', { investmentId }),
 };
 

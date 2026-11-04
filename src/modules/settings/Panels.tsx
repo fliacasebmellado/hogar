@@ -10,7 +10,7 @@ import { setConfig, type NotificationSettings } from '../../services/config';
 import { DEFAULT_AI_SETTINGS, type AISettings } from '../../ai/types';
 import { speechRecognitionAvailable } from '../../ai/processors';
 import { HttpTransport } from '../../sync/transport';
-import { api } from '../../integrations/google';
+import { api, type PushInfo } from '../../integrations/google';
 import { loadDemo, countDemo } from '../../services/demo';
 import { ENTITY_NAMES } from '../../domain/types';
 import { formatDateTimeHuman } from '../../domain/dates';
@@ -101,7 +101,8 @@ export function NotificationsPanel() {
   };
   return (
     <div className="stack">
-      <Banner tone="info">El centro de avisos de la app siempre funciona. Las notificaciones del sistema solo se muestran mientras la app está abierta o en segundo plano reciente: sin un servidor de notificaciones push (no incluido para mantener costo cero) no son fiables con la app cerrada. Para recordatorios con la app cerrada, marcá los eventos para Google Calendar y usá sus recordatorios.</Banner>
+      {profile?.role === 'adult' && <PhonePush />}
+      <Banner tone="info">El centro de avisos de la app siempre funciona. Las notificaciones del sistema de abajo solo se muestran mientras la app está abierta o en segundo plano reciente. Para avisos con la app cerrada, usá ntfy (arriba).</Banner>
       <div className="card card-pad form">
         <Checkbox label="Mostrar avisos en la app" checked={s.enabled} onChange={(v) => setS({ ...s, enabled: v })} />
         <div className="row-wrap">
@@ -127,6 +128,47 @@ export function NotificationsPanel() {
         </div>
         <button className="btn btn-primary" onClick={() => run(() => setConfig(repo, 'notifications', s, profile?.id), 'Preferencias guardadas')}>Guardar</button>
       </div>
+    </div>
+  );
+}
+
+/** Avisos al celular con la app ntfy: cada adulto se suscribe a su propio tópico secreto. */
+function PhonePush() {
+  const { backend, run, online, profile, toast } = useApp();
+  const [info, setInfo] = useState<PushInfo | null>(null);
+  const [error, setError] = useState('');
+  const t = backend ? new HttpTransport(backend.url, backend.token) : null;
+  const appUrl = location.origin + location.pathname;
+  useEffect(() => {
+    if (!t || !online || !profile) return;
+    setInfo(null); setError('');
+    api.pushStatus(t, profile.id, appUrl).then(setInfo, (e) => setError(/desconocida/i.test(e.message) ? 'El backend de Google todavía no tiene esta función: falta publicarla.' : e.message));
+  }, [backend?.url, online, profile?.id]);
+  if (!profile) return null;
+  const set = async (patch: { enabled?: boolean; newTopic?: boolean }, msg: string) => { const r = await run(() => api.pushSet(t!, profile.id, patch), msg); if (r) setInfo(r); };
+  const copy = async () => { try { await navigator.clipboard.writeText(info!.topic); toast('Nombre copiado', { tone: 'ok' }); } catch { toast('No se pudo copiar: escribilo a mano.', { tone: 'error' }); } };
+  return (
+    <div className="card card-pad stack-sm" aria-labelledby="h-push">
+      <h3 id="h-push">📲 Avisos en el celular (ntfy)</h3>
+      <p className="small">Te llega un aviso cuando alguien agrega algo a <strong>Compras</strong> o carga una <strong>tarea</strong> para vos (o para los chicos), aunque Hogar esté cerrada. No te avisa de lo que cargás vos. Nunca se manda nada de Salud ni de Economía.</p>
+      {!backend ? <p className="small muted">Conectá la app con Google para usar esta opción.</p> : !online ? <p className="small muted">Sin conexión.</p> : error ? <p className="small">⏳ {error}</p> : !info ? <p className="small muted">Consultando…</p> : (
+        <>
+          <ol className="small" style={{ margin: 0, paddingLeft: 18 }}>
+            <li>Instalá la app <strong>ntfy</strong> en tu celular.</li>
+            <li>Tocá <strong>+</strong> (“Suscribirse al tópico”) y escribí este nombre exacto. Dejá el servidor como está (ntfy.sh).</li>
+          </ol>
+          <div className="row">
+            <code className="push-topic" aria-label="Nombre del tópico">{info.topic}</code>
+            <button className="btn btn-sm" onClick={copy}>Copiar</button>
+          </div>
+          <Checkbox label={`Mandarme avisos a mí (${profile.name})`} checked={info.enabled} onChange={(v) => set({ enabled: v }, v ? 'Avisos activados' : 'Avisos desactivados')} />
+          <div className="row-wrap">
+            <button className="btn btn-sm" disabled={!info.enabled} onClick={() => run(() => api.pushTest(t!, profile.id), 'Aviso de prueba enviado: fijate en ntfy')}>Mandar un aviso de prueba</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => set({ newTopic: true }, 'Nombre nuevo: suscribite otra vez en ntfy')}>Cambiar el nombre</button>
+          </div>
+          <p className="tiny muted">El nombre es secreto y solo tuyo: no lo compartas. El aviso pasa por el servidor público de ntfy con el texto de lo cargado (por ejemplo “leche, pan”). Si alguna vez se filtra, tocá “Cambiar el nombre”.</p>
+        </>
+      )}
     </div>
   );
 }

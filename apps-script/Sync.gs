@@ -31,6 +31,14 @@ function sanitize_(entity, rec) {
 }
 
 function push_(req) {
+  var out = pushApply_(req);
+  var created = out._created || [];
+  delete out._created;
+  if (created.length && typeof notifyCreated_ === 'function') notifyCreated_(created); // fuera del bloqueo
+  return out;
+}
+
+function pushApply_(req) {
   if (!req.ops || !req.ops.length) return { results: [] };
   if (req.ops.length > 100) throw err_('Lote demasiado grande', 'format');
   var lock = LockService.getScriptLock();
@@ -42,6 +50,7 @@ function push_(req) {
     var results = [];
     var moves = [];
     var touched = {};
+    var created = [];
     var now = new Date().toISOString();
     req.ops.forEach(function (op) {
       try {
@@ -66,6 +75,7 @@ function push_(req) {
         t.put(rec);
         touched[op.entity] = true;
         if (op.entity === 'attachments') moves.push([current, rec]);
+        if (!current && !rec.deleted && !rec.demo && (op.entity === 'shoppingItems' || op.entity === 'tasks')) created.push({ entity: op.entity, rec: rec });
         ops.idx[op.opId] = { entity: op.entity, recordId: op.recordId };
         ops.appended.push([op.opId, now, op.entity, op.recordId, String(rec.version), String(req.deviceId || '')]);
         results.push({ opId: op.opId, status: 'applied', record: t.get(op.recordId) });
@@ -83,7 +93,7 @@ function push_(req) {
       ensureSize_(ops.sheet, ops.sheet.getLastRow() + ops.appended.length, 6);
       ops.sheet.getRange(ops.sheet.getLastRow() + 1, 1, ops.appended.length, 6).setValues(ops.appended);
     }
-    return { results: results };
+    return { results: results, _created: created };
   } finally {
     lock.releaseLock();
   }

@@ -37,6 +37,9 @@ var ACTIONS = {
   visionStatus: function () { return visionStatus_(); },
   setGeminiKey: function (req) { return setGeminiKey_(req); },
   visionInterpret: function (req) { return visionInterpret_(req); },
+  pushStatus: function (req) { return pushStatus_(req); },
+  pushSet: function (req) { return pushSet_(req); },
+  pushTest: function (req) { return pushTest_(req); },
 };
 
 function doPost(e) {

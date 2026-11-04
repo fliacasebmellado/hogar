@@ -49,26 +49,36 @@ function pushTest_(req) {
   pushProfile_(req.profileId);
   var c = pushConfig_()[req.profileId];
   if (!c) throw err_('Primero abrí Ajustes → Notificaciones.', 'format');
-  ntfySend_(c.topic, { title: 'Hogar', message: '✅ Listo: los avisos de Hogar llegan a este celular.', tags: ['house'] });
-  return { sent: true };
+  var body = ntfyBody_(c.topic, { title: 'Hogar', message: '✅ Listo: los avisos de Hogar llegan a este celular.', tags: ['house'] });
+  return ntfyTry_(body) ? { sent: true } : { sent: false, notify: [body], notifyServer: NTFY_SERVER };
 }
 
-function ntfySend_(topic, msg) {
+function ntfyBody_(topic, msg) {
   var cfg = pushConfig_();
   var body = { topic: topic, title: msg.title, message: msg.message, tags: msg.tags || [] };
   if (cfg._appUrl) body.click = cfg._appUrl + (msg.path ? '#' + msg.path : '');
-  var res = UrlFetchApp.fetch(NTFY_SERVER + '/', { method: 'post', contentType: 'application/json', muteHttpExceptions: true, payload: JSON.stringify(body) });
-  var code = res.getResponseCode();
-  if (code >= 300) throw err_('ntfy no respondió (' + code + ').', 'network');
+  return body;
 }
 
-/** Se llama después de cada push con los registros NUEVOS (no ediciones). Nunca hace fallar la sincronización. */
-function notifyCreated_(created) {
+/**
+ * Intenta mandar el aviso desde Google. Google sale a internet por direcciones compartidas con muchísimos scripts y
+ * ntfy.sh a veces las rechaza por límite (429): en ese caso devuelve false y la app lo manda desde el celular.
+ */
+function ntfyTry_(body) {
   try {
-    if (!created.length) return;
+    var res = UrlFetchApp.fetch(NTFY_SERVER + '/', { method: 'post', contentType: 'application/json', muteHttpExceptions: true, payload: JSON.stringify(body) });
+    return res.getResponseCode() < 300;
+  } catch (e) { return false; }
+}
+
+/** Se llama después de cada push con los registros NUEVOS (no ediciones). Devuelve los avisos que no se pudieron mandar. */
+function notifyCreated_(created) {
+  var pending = [];
+  try {
+    if (!created.length) return pending;
     var cfg = pushConfig_();
     var any = Object.keys(cfg).some(function (k) { return k.charAt(0) !== '_' && cfg[k] && cfg[k].enabled; });
-    if (!any) return;
+    if (!any) return pending;
     var profiles = {};
     new Table_('profiles').all().forEach(function (p) { if (!p.deleted) profiles[p.id] = p; });
     var adults = Object.keys(profiles).filter(function (id) { return profiles[id].role === 'adult' && profiles[id].active !== false; });
@@ -126,9 +136,9 @@ function notifyCreated_(created) {
       });
       if (!lines.length) return;
       var onlyShop = !b.tasks.length;
-      try {
-        ntfySend_(c.topic, { title: onlyShop ? 'Hogar · Compras' : b.shopOrder.length ? 'Hogar' : 'Hogar · Tareas', message: lines.join('\n').slice(0, 3500), tags: [], path: onlyShop ? '/compras' : '/tareas' });
-      } catch (e) { logError_('avisos', e); }
+      var body = ntfyBody_(c.topic, { title: onlyShop ? 'Hogar · Compras' : b.shopOrder.length ? 'Hogar' : 'Hogar · Tareas', message: lines.join('\n').slice(0, 3500), tags: [], path: onlyShop ? '/compras' : '/tareas' });
+      if (!ntfyTry_(body)) pending.push(body);
     });
   } catch (e) { logError_('avisos', e); }
+  return pending;
 }

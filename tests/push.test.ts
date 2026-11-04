@@ -44,6 +44,16 @@ describe('avisos con ntfy', () => {
     s.call('push', { ops: [{ ...op('tasks', { id: 't1', title: 'Llevar el auto', assigneeId: 'profile-papa', status: 'pendiente', updatedBy: 'profile-mama' }), baseVersion: 1 }] });
     expect(s.ctx.__fetches.filter((f: any) => f.url.includes('ntfy'))).toHaveLength(0);
 
+    // Si ntfy rechaza a Google (429), el aviso vuelve a la app para que lo mande el celular.
+    s.ctx.__ntfyCode = 429;
+    const r = s.call('push', { ops: [op('shoppingItems', { id: 'i9', name: 'Yerba', status: 'pendiente', updatedBy: 'profile-papa' })] }).result;
+    expect(r.notify).toHaveLength(1);
+    expect(r.notify[0]).toMatchObject({ topic: st.topic, message: '🛒 Papá agregó: Yerba' });
+    expect(r.notifyServer).toBe('https://ntfy.sh');
+    expect(s.call('pushTest', { profileId: 'profile-mama' }).result).toMatchObject({ sent: false, notifyServer: 'https://ntfy.sh' });
+    s.ctx.__ntfyCode = 200;
+    expect(s.call('pushTest', { profileId: 'profile-mama' }).result.sent).toBe(true);
+
     // Apagado: no manda nada.
     s.call('pushSet', { profileId: 'profile-papa', enabled: false });
     s.call('pushSet', { profileId: 'profile-mama', enabled: false });

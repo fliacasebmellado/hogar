@@ -50,7 +50,7 @@ export const api = {
   visionInterpret: (t: Transport, payload: { images: { mime: string; base64: string }[]; text: string; context: any }) => t.call<import('../ai/vision').VisionResult>('visionInterpret', payload),
   pushStatus: (t: Transport, profileId: string, appUrl: string) => t.call<PushInfo>('pushStatus', { profileId, appUrl }),
   pushSet: (t: Transport, profileId: string, patch: { enabled?: boolean; newTopic?: boolean }) => t.call<PushInfo>('pushSet', { profileId, ...patch }),
-  pushTest: (t: Transport, profileId: string) => t.call<{ sent: boolean }>('pushTest', { profileId }),
+  pushTest: (t: Transport, profileId: string) => t.call<{ sent: boolean; notify?: import('../services/ntfy').NtfyMessage[]; notifyServer?: string }>('pushTest', { profileId }),
   investmentFiles: (t: Transport, investmentId: string) => t.call<{ files: DriveFileInfo[]; folderUrl: string }>('investmentFiles', { investmentId }),
 };
 

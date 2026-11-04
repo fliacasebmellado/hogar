@@ -15,6 +15,7 @@ import { nowISO } from '../domain/dates';
 import { BackendError, isRetryable, type Transport } from './transport';
 import { blobToBase64, base64ToBlob } from '../services/files';
 import schema from '../../shared/schema.json';
+import { sendNtfy, type NtfyMessage } from '../services/ntfy';
 import { normalizeRecord } from '../domain/normalize';
 
 const ORDER: string[] = schema.syncOrder;
@@ -258,11 +259,12 @@ export class SyncEngine {
 
       let results: any[];
       try {
-        const res = await t.call<{ results: any[] }>('push', {
+        const res = await t.call<{ results: any[]; notify?: NtfyMessage[]; notifyServer?: string }>('push', {
           deviceId: this.repo.deviceId,
           ops: batch.map((o) => ({ opId: o.opId, entity: o.entity, recordId: o.recordId, baseVersion: o.baseVersion, force: !!o.force, record: o.payload })),
         });
         results = res.results;
+        if (res.notify?.length) void sendNtfy(res.notifyServer, res.notify).catch(() => undefined); // no frena la sincronización
       } catch (e: any) {
         // El servidor pudo haber aplicado el lote antes del corte: al reintentar con los mismos opId no se duplica.
         for (const o of batch) {

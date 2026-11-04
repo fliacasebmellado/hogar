@@ -34,7 +34,10 @@ function push_(req) {
   var out = pushApply_(req);
   var created = out._created || [];
   delete out._created;
-  if (created.length && typeof notifyCreated_ === 'function') notifyCreated_(created); // fuera del bloqueo
+  if (created.length && typeof notifyCreated_ === 'function') {
+    var pending = notifyCreated_(created); // fuera del bloqueo; lo que Google no pudo mandar lo manda la app
+    if (pending.length) { out.notify = pending; out.notifyServer = NTFY_SERVER; }
+  }
   return out;
 }
 

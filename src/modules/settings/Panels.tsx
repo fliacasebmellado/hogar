@@ -16,6 +16,7 @@ import { ENTITY_NAMES } from '../../domain/types';
 import { formatDateTimeHuman } from '../../domain/dates';
 import schema from '../../../shared/schema.json';
 import { humanSize } from '../../services/files';
+import { sendNtfy } from '../../services/ntfy';
 
 const MODULE_LABEL: Record<CategoryModule, string> = { events: 'Eventos', tasks: 'Tareas', shopping: 'Compras', payments: 'Pagos', expenses: 'Gastos', documents: 'Documentos', assets: 'Elementos de la casa', maintenance: 'Mantenimiento' };
 
@@ -163,7 +164,7 @@ function PhonePush() {
           </div>
           <Checkbox label={`Mandarme avisos a mí (${profile.name})`} checked={info.enabled} onChange={(v) => set({ enabled: v }, v ? 'Avisos activados' : 'Avisos desactivados')} />
           <div className="row-wrap">
-            <button className="btn btn-sm" disabled={!info.enabled} onClick={() => run(() => api.pushTest(t!, profile.id), 'Aviso de prueba enviado: fijate en ntfy')}>Mandar un aviso de prueba</button>
+            <button className="btn btn-sm" disabled={!info.enabled} onClick={() => run(async () => { const r = await api.pushTest(t!, profile.id); if (!r.sent && !(await sendNtfy(r.notifyServer, r.notify, 1500))) throw new Error('No se pudo mandar el aviso. Probá de nuevo en un rato.'); }, 'Aviso de prueba enviado: fijate en ntfy')}>Mandar un aviso de prueba</button>
             <button className="btn btn-sm btn-ghost" onClick={() => set({ newTopic: true }, 'Nombre nuevo: suscribite otra vez en ntfy')}>Cambiar el nombre</button>
           </div>
           <p className="tiny muted">El nombre es secreto y solo tuyo: no lo compartas. El aviso pasa por el servidor público de ntfy con el texto de lo cargado (por ejemplo “leche, pan”). Si alguna vez se filtra, tocá “Cambiar el nombre”.</p>

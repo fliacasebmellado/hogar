@@ -245,7 +245,7 @@ export function createGasServer(opts: { token?: string } = {}): GasServer {
       formatDate,
     },
     // Gemini simulado: devuelve lo que la prueba deje en ctx.__gemini (y guarda el último pedido en ctx.__geminiReq).
-    UrlFetchApp: { fetch: (url: string, opts: any) => { (ctx.__fetches ||= []).push({ url, opts }); if (url.includes('ntfy')) return { getResponseCode: () => 200, getContentText: () => '{}' }; ctx.__geminiReq = { url, opts }; const r = ctx.__gemini ?? { code: 200, body: { candidates: [] } }; return { getResponseCode: () => r.code, getContentText: () => JSON.stringify(r.body) }; } },
+    UrlFetchApp: { fetch: (url: string, opts: any) => { (ctx.__fetches ||= []).push({ url, opts }); if (url.includes('ntfy')) return { getResponseCode: () => ctx.__ntfyCode ?? 200, getContentText: () => '{}' }; ctx.__geminiReq = { url, opts }; const r = ctx.__gemini ?? { code: 200, body: { candidates: [] } }; return { getResponseCode: () => r.code, getContentText: () => JSON.stringify(r.body) }; } },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'la cuenta de Google de la familia' }), getScriptTimeZone: () => 'America/Argentina/Buenos_Aires' },
     ScriptApp: {
       getProjectTriggers: () => triggers.map((t) => ({ getHandlerFunction: () => t.fn, getTriggerSourceId: () => t.src })),

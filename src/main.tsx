@@ -15,10 +15,25 @@ let applyUpdate: null | (() => void) = null;
 const updateListeners = new Set<() => void>();
 if ('serviceWorker' in navigator && !import.meta.env.DEV) {
   import('virtual:pwa-register').then(({ registerSW }) => {
+    const startedAt = Date.now();
+    // Se actualiza sola si la versión nueva aparece al abrir la app (primeros 20 s) o al volver a ella sin estar escribiendo.
+    // Los datos están guardados en el dispositivo, así que recargar no pierde nada; si la persona está escribiendo, se ofrece el botón.
+    const typing = () => { const a = document.activeElement as HTMLElement | null; return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable) || !!document.querySelector('dialog[open]'); };
     const updateSW = registerSW({
       immediate: true,
-      onNeedRefresh: () => { applyUpdate = () => updateSW(true); updateListeners.forEach((f) => f()); },
-      onRegisteredSW: (_url, reg) => { if (reg) setInterval(() => reg.update().catch(() => undefined), 60 * 60 * 1000); },
+      onNeedRefresh: () => {
+        applyUpdate = () => updateSW(true);
+        if (Date.now() - startedAt < 20000 && !typing()) { updateSW(true); return; }
+        updateListeners.forEach((f) => f());
+        const onShow = () => { if (document.visibilityState === 'visible' && !typing()) updateSW(true); };
+        document.addEventListener('visibilitychange', onShow);
+      },
+      onRegisteredSW: (_url, reg) => {
+        if (!reg) return;
+        setInterval(() => reg.update().catch(() => undefined), 60 * 60 * 1000);
+        // Al volver a la app (por ejemplo, desde el inicio del celular) busca versión nueva.
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => undefined); });
+      },
     });
   });
 }

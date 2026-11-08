@@ -733,3 +733,4 @@ details.rubro > .card { border-top-left-radius: 0; border-top-right-radius: 0; }
 .vision-box .input { background: var(--surface); }
 
 .push-topic{flex:1;min-width:0;padding:8px 10px;border-radius:10px;background:var(--surface-2,#f4f4f4);font-size:15px;word-break:break-all;user-select:all}
+.doc-row{display:flex;align-items:center;gap:4px}.doc-row>.item{flex:1;min-width:0}.doc-open{flex:none;margin-right:8px}.doc-group-title{padding:12px 16px 4px;font-size:15px}

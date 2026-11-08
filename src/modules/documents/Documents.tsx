@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, Lock, ExternalLink, Download, ScanText } from 'lucide-react';
+import { Plus, FileText, Lock, ExternalLink, Download, ScanText, FolderOpen, ChevronDown } from 'lucide-react';
 import { useApp, useLive } from '../../app/context';
 import type { Attachment, DocumentRecord } from '../../domain/types';
 import { CategoryChip, ChipFilter, Empty, StatusChip, Banner } from '../../ui/components';
@@ -25,6 +25,14 @@ export default function Documents() {
   useEffect(() => { const id = params.get('id'); if (id && docs.length) { const d = docs.find((x) => x.id === id); if (d) setEditing(d); } }, [params, docs.length]);
   const list = useMemo(() => searchDocuments(docs, profile, { text, category: cat || undefined, personId: person || undefined }, permissions), [docs, profile, text, cat, person, permissions]);
   const hidden = docs.filter((d) => !d.deleted).length - searchDocuments(docs, profile, {}, permissions).length;
+  const filtering = !!(text.trim() || cat || person);
+  const recent = useMemo(() => [...list].sort((a, b) => ((b.createdAt ?? '') > (a.createdAt ?? '') ? 1 : -1)).slice(0, 5), [list]);
+  const groups = useMemo(() => {
+    const cats = categories('documents');
+    const by = new Map<string, DocumentRecord[]>();
+    for (const d of list) { const k = cats.some((c) => c.id === d.category) ? d.category : 'otros'; by.set(k, [...(by.get(k) ?? []), d]); }
+    return [...by.entries()].map(([id, ds]) => ({ id, label: cats.find((c) => c.id === id)?.label ?? 'Otros', docs: ds })).sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }, [list, categories]);
   const close = () => { setEditing(undefined); if (params.get('id')) setParams({}, { replace: true }); };
   return (
     <div>
@@ -37,29 +45,53 @@ export default function Documents() {
         <ChipFilter label="Persona" value={person} onChange={setPerson} options={profiles.filter((p) => p.active).map((p) => ({ value: p.id, label: p.name }))} />
       </div>
       {hidden > 0 && <p className="muted small" style={{ marginBottom: 8 }}><Lock size={12} /> {hidden} documento(s) privado(s) no se muestran para el perfil {profile?.name}.</p>}
-      {list.length === 0 ? <div className="card"><Empty icon={<FileText size={36} />} title={docs.length ? 'No hay documentos con estos filtros.' : 'Todavía no hay documentos. Cargá facturas, garantías, manuales, documentación del colegio…'} /></div> : (
-        <div className="card"><ul className="list">
-          {list.map((d) => (
-            <li key={d.id}>
-              <button className="item" onClick={() => setEditing(d)}>
-                <FileText size={20} className="muted" />
-                <div className="item-main">
-                  <div className="item-title">{d.name}</div>
-                  <div className="item-sub">
-                    <CategoryChip id={d.category} categories={categories('documents')} />
-                    {d.date && <span>{formatDate(d.date, { year: true })}</span>}
-                    {d.personId && <span>{profiles.find((p) => p.id === d.personId)?.name}</span>}
-                    {(d.tags ?? []).slice(0, 3).map((t) => <span key={t} className="chip chip-outline">{t}</span>)}
-                  </div>
-                </div>
-                {d.visibility !== 'familia' && <span title={VISIBILITY_LABEL[d.visibility]}><Lock size={14} aria-label={VISIBILITY_LABEL[d.visibility]} /></span>}
-              </button>
-            </li>
+      {list.length === 0 ? <div className="card"><Empty icon={<FileText size={36} />} title={docs.length ? 'No hay documentos con estos filtros.' : 'Todavía no hay documentos. Cargá facturas, garantías, manuales, documentación del colegio…'} /></div>
+        : filtering ? <div className="card"><ul className="list">{list.map((d) => <DocRow key={d.id} d={d} onEdit={setEditing} />)}</ul></div> : (
+        <div className="stack-sm">
+          {recent.length > 0 && (
+            <section className="card" aria-labelledby="h-doc-recent">
+              <h3 id="h-doc-recent" className="doc-group-title">Recientes</h3>
+              <ul className="list">{recent.map((d) => <DocRow key={d.id} d={d} onEdit={setEditing} />)}</ul>
+            </section>
+          )}
+          {groups.map((g) => (
+            <details key={g.id} className="rubro">
+              <summary className="rubro-head">
+                <span className="rubro-ico" aria-hidden="true"><FolderOpen size={20} /></span>
+                <span className="rubro-name">{g.label}</span>
+                <span className="rubro-count">{g.docs.length}</span>
+                <ChevronDown className="rubro-chevron" size={20} aria-hidden="true" />
+              </summary>
+              <div className="card"><ul className="list">{g.docs.map((d) => <DocRow key={d.id} d={d} onEdit={setEditing} />)}</ul></div>
+            </details>
           ))}
-        </ul></div>
+        </div>
       )}
       <DocumentSheet open={editing !== undefined} doc={editing ?? null} onClose={close} />
     </div>
+  );
+}
+
+/** Una fila: tocar abre la ficha; el botón de la derecha abre el archivo directo. */
+function DocRow({ d, onEdit }: { d: DocumentRecord; onEdit: (d: DocumentRecord) => void }) {
+  const { profiles, categories } = useApp();
+  const openFile = useOpenAttachment();
+  return (
+    <li className="doc-row">
+      <button className="item" onClick={() => onEdit(d)}>
+        <FileText size={20} className="muted" />
+        <div className="item-main">
+          <div className="item-title">{d.name}</div>
+          <div className="item-sub">
+            <CategoryChip id={d.category} categories={categories('documents')} />
+            {d.date && <span>{formatDate(d.date, { year: true })}</span>}
+            {d.personId && <span>{profiles.find((p) => p.id === d.personId)?.name}</span>}
+          </div>
+        </div>
+        {d.visibility !== 'familia' && <span title={VISIBILITY_LABEL[d.visibility]}><Lock size={14} aria-label={VISIBILITY_LABEL[d.visibility]} /></span>}
+      </button>
+      {d.attachmentId && <button className="btn btn-sm btn-ghost doc-open" aria-label={`Abrir ${d.name}`} onClick={() => openFile(d.attachmentId!)}><ExternalLink size={16} /> Abrir</button>}
+    </li>
   );
 }
 

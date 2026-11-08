@@ -15,9 +15,9 @@ export const DEFAULT_PERMISSIONS: PermissionMatrix = {
     'finance.view': true, 'finance.edit': true, 'documents.private': true, 'settings.admin': true, 'profiles.manage': true,
     'integrations.manage': true, 'backup.manage': true, 'tasks.assignOthers': true, 'events.edit': true, 'house.edit': true,
   },
-  // Perfil "Familia": vista compartida de todos. Cualquiera puede elegirlo, por eso no muestra economía ni privados.
+  // Perfil "Familia" ("Todos"): lo usan los adultos para ver todo junto. Ve los documentos de adultos; economía no.
   family: {
-    'finance.view': false, 'finance.edit': false, 'documents.private': false, 'settings.admin': false, 'profiles.manage': false,
+    'finance.view': false, 'finance.edit': false, 'documents.private': true, 'settings.admin': false, 'profiles.manage': false,
     'integrations.manage': false, 'backup.manage': false, 'tasks.assignOthers': true, 'events.edit': true, 'house.edit': true,
   },
   child: {

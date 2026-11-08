@@ -93,7 +93,10 @@ export function AppProvider({ repo, children }: { repo: Repo; children: ReactNod
   }, [prefs]);
 
   const profile = profiles.find((p) => p.id === currentId && p.active) ?? undefined;
-  const permissions = permissionsFrom(configRows);
+  // El perfil Familia ("Todos") es de los adultos para ver todo junto: ve los documentos "Solo adultos".
+  // Los "Personal" siguen siendo solo de su dueño.
+  const basePermissions = permissionsFrom(configRows);
+  const permissions: PermissionMatrix = { ...basePermissions, family: { ...basePermissions.family, 'documents.private': true } };
   const notifSettings = notificationSettingsFrom(configRows);
   // El color del perfil activo tiñe encabezado, botones de acción y selección.
   useEffect(() => {
